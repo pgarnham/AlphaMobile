@@ -1,5 +1,6 @@
 import 'package:alpha_mobile/account.dart';
 import 'package:alpha_mobile/home.dart';
+import 'package:alpha_mobile/login.dart';
 import 'package:alpha_mobile/messages.dart';
 import 'package:alpha_mobile/notifications.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,7 +18,7 @@ class _NavBarState extends State<NavBar> {
     PropertiesPage(),
     MessagesPage(),
     NotificationsPage(),
-    AccountPage()
+    LoginPage()
   ];
 
   @override
