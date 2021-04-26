@@ -1,5 +1,6 @@
 import 'package:alpha_mobile/data.dart';
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -115,9 +116,55 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               child: Container(
                 height: 300,
                 width: MediaQuery.of(context).size.width,
-                child: Image.asset(
-                  'assets/parcela01.jpg',
-                  fit: BoxFit.cover,
+                child: CarouselSlider(
+                  options: CarouselOptions(
+                    height: 180.0,
+                    enlargeCenterPage: true,
+                    autoPlay: true, // en vola lo pondría false
+                    aspectRatio: 16 / 9,
+                    autoPlayCurve: Curves.fastOutSlowIn,
+                    enableInfiniteScroll: true,
+                    autoPlayAnimationDuration: Duration(milliseconds: 1200),
+                    viewportFraction: 0.8,
+                  ),
+                  items: [
+                    //1st Image of Slider
+                    Container(
+                      margin: EdgeInsets.all(6.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                              "https://cf.bstatic.com/images/hotel/max1024x768/117/117060679.jpg"),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    //1st Image of Slider
+                    Container(
+                      margin: EdgeInsets.all(6.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                              "https://www.costacuraco.cl/wp-content/uploads/2020/06/costa-curaco-ventas-de-terrenos-en-chiloe-home-background-instagram-feed.jpg"),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    //1st Image of Slider
+                    Container(
+                      margin: EdgeInsets.all(6.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                              "https://images.locanto.cl/Venta-de-Parcelas-en-el-Sur-de-Chile-Los-Lagos-Propiedades/vap_5015949749.jpg"),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
