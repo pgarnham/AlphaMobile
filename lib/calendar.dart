@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -7,9 +7,23 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime _selectedDay;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  CalendarController _controller;
+  @override
+  void initState() {
+    _controller = CalendarController();
+    super.initState();
+  }
+
+  void calendarTapped(CalendarTapDetails calendarTapDetails) {
+    if (_controller.view == CalendarView.month &&
+        calendarTapDetails.targetElement == CalendarElement.calendarCell) {
+      _controller.view = CalendarView.day;
+    } else if ((_controller.view == CalendarView.week ||
+            _controller.view == CalendarView.workWeek) &&
+        calendarTapDetails.targetElement == CalendarElement.viewHeader) {
+      _controller.view = CalendarView.day;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,46 +31,59 @@ class _CalendarPageState extends State<CalendarPage> {
       appBar: AppBar(
         title: Text("Calendario"),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TableCalendar(
-            calendarStyle: CalendarStyle(
-              selectedDecoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.blue[500],
-              ),
-              todayDecoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.blue.withOpacity(0.5),
-              ),
-            ),
-            firstDay: DateTime.utc(2010, 10, 16),
-            lastDay: DateTime.utc(2050, 3, 14),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) {
-              return isSameDay(_selectedDay, day);
-            },
-            onDaySelected: (selectedDay, focusedDay) {
-              if (!isSameDay(_selectedDay, selectedDay)) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-              }
-            },
-            calendarFormat: _calendarFormat,
-            onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-            },
-          ),
+      body: SfCalendar(
+        controller: _controller,
+        view: CalendarView.month,
+        allowedViews: [
+          CalendarView.day,
+          CalendarView.week,
+          CalendarView.month,
         ],
+        onTap: calendarTapped,
+        firstDayOfWeek: 1,
+        initialDisplayDate: DateTime.now(),
+        dataSource: MeetingDataSource(getAppointments()),
+        selectionDecoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.3),
+          border: Border.all(color: Colors.blue, width: 1),
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+          shape: BoxShape.rectangle,
+        ),
       ),
     );
+  }
+}
+
+List<Appointment> getAppointments() {
+  List<Appointment> meetings = [];
+  final DateTime today = DateTime.now();
+  final DateTime startTime =
+      DateTime(today.year, today.month, today.day, 9, 0, 0);
+  final DateTime endTime = startTime.add(Duration(hours: 2));
+
+  meetings.add(
+    Appointment(
+      startTime: startTime,
+      endTime: endTime,
+      subject: "Visita Terreno",
+      color: Colors.blue,
+    ),
+  );
+
+  meetings.add(
+    Appointment(
+      startTime: DateTime(2021, 05, 20, 12, 0, 0),
+      endTime: DateTime(2021, 05, 20, 15, 0, 0),
+      subject: "Visita Parcela",
+      color: Colors.blue,
+    ),
+  );
+
+  return meetings;
+}
+
+class MeetingDataSource extends CalendarDataSource {
+  MeetingDataSource(List<Appointment> source) {
+    appointments = source;
   }
 }
