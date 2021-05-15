@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:alpha_mobile/screens/chatDetailPage.dart';
 
 class ConversationList extends StatefulWidget {
   String name;
@@ -20,7 +21,11 @@ class _ConversationListState extends State<ConversationList> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return ChatDetailPage();
+        }));
+      },
       child: Container(
         padding: EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
         child: Row(
