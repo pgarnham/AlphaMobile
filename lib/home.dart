@@ -114,7 +114,7 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
             Padding(
               padding: EdgeInsets.all(3),
               child: Container(
-                height: 300,
+                height: 200,
                 width: MediaQuery.of(context).size.width,
                 child: CarouselSlider(
                   options: CarouselOptions(
@@ -168,6 +168,63 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 ),
               ),
             ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MakeAppointment()),
+                );
+                /* showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      content: Container(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: Column(
+                          children: [
+                            Text(
+                              "Agendar",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Form(
+                              key: _formKey,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Text(
+                                      selectedDate.toString().substring(0, 10)),
+                                  ElevatedButton(
+                                      onPressed: () => _selectDate(context),
+                                      child: Text("Selecciona Fecha")),
+                                  TextFormField(),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: ElevatedButton(
+                                      child: Text("Submit"),
+                                      onPressed: () {
+                                        if (_formKey.currentState.validate()) {
+                                          _formKey.currentState.save();
+                                        }
+                                      },
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ); */
+              },
+              icon: Icon(Icons.calendar_today),
+              label: Text("Agendar Visita"),
+            ),
+            SizedBox(height: 18),
             Text(
               properties[widget.index]["title"],
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
@@ -219,6 +276,119 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               ),
             ),
             SizedBox(height: 50),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MakeAppointment extends StatefulWidget {
+  MakeAppointment({Key key}) : super(key: key);
+
+  @override
+  _MakeAppointmentState createState() => _MakeAppointmentState();
+}
+
+class _MakeAppointmentState extends State<MakeAppointment> {
+  DateTime selectedDate = DateTime.now();
+  TimeOfDay selectedTime = TimeOfDay(hour: 08, minute: 00);
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2050));
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+      });
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime,
+    );
+    if (picked != null)
+      setState(() {
+        selectedTime = picked;
+      });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Agendar'),
+      ),
+      body: Container(
+        width: MediaQuery.of(context).size.width,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          //mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 50),
+            Icon(Icons.calendar_today, size: 100, color: Colors.blue),
+            SizedBox(height: 50),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blueAccent, width: 1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    selectedDate.toString().substring(0, 10),
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _selectDate(context),
+                    child: Text(
+                      "Selecciona Fecha",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blueAccent, width: 1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    selectedTime.format(context),
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _selectTime(context),
+                    child: Text(
+                      "Selecciona Hora",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 5),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                child: Text("Confirmar"),
+                onPressed: () {
+                  print(selectedDate);
+                  print(selectedTime);
+                  // Join selectedDate y selectedTime and request to the backend
+                },
+              ),
+            ),
           ],
         ),
       ),
