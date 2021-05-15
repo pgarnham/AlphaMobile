@@ -22,6 +22,82 @@ class _CalendarPageState extends State<CalendarPage> {
             _controller.view == CalendarView.workWeek) &&
         calendarTapDetails.targetElement == CalendarElement.viewHeader) {
       _controller.view = CalendarView.day;
+    } else if (calendarTapDetails.targetElement ==
+            CalendarElement.appointment ||
+        calendarTapDetails.targetElement == CalendarElement.agenda) {
+      final Appointment appointmentDetails = calendarTapDetails.appointments[0];
+
+      String _subjectText = appointmentDetails.subject;
+      String _dateText =
+          appointmentDetails.startTime.toString().substring(0, 10);
+
+      String _timeText =
+          appointmentDetails.startTime.toString().substring(10, 16);
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Container(
+                child: Text(
+              _subjectText,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            )),
+            content: Container(
+              height: 80,
+              child: Column(
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        'Fecha: ' + _dateText,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 5),
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        'Hora: ' + _timeText,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 5),
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        'Detalles: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              new TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: new Text('Cerrar'))
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -43,6 +119,7 @@ class _CalendarPageState extends State<CalendarPage> {
         firstDayOfWeek: 1,
         initialDisplayDate: DateTime.now(),
         dataSource: MeetingDataSource(getAppointments()),
+        appointmentTextStyle: TextStyle(fontSize: 18),
         selectionDecoration: BoxDecoration(
           color: Colors.blue.withOpacity(0.3),
           border: Border.all(color: Colors.blue, width: 1),
