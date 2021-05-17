@@ -39,49 +39,49 @@ List<Map> propertiesChats = [
   {
     "propertyName": "Parcela 10 los aromos",
     "lastMessage": "Awesome Setup",
-    "imageURL": "images/userImage1.jpeg",
+    "imageURL": "https://i.imgur.com/ALHwjKY.jpg",
     "lastTime": "Now"
   },
   {
     "propertyName": "Campo Exterior Casa 2",
     "lastMessage": "That's Great",
-    "imageURL": "images/userImage2.jpeg",
+    "imageURL": "https://i.imgur.com/k5Qo1F3.jpg",
     "lastTime": "Yesterday"
   },
   {
     "propertyName": "Sitio San Juan km 46",
     "lastMessage": "Hey where are you?",
-    "imageURL": "images/userImage3.jpeg",
+    "imageURL": "https://i.imgur.com/eRM6hHb.jpg",
     "lastTime": "31 Mar"
   },
   {
     "propertyName": "José Hidalgo 223 casa C",
     "lastMessage": "Busy! Call me in 20 mins",
-    "imageURL": "images/userImage4.jpeg",
+    "imageURL": "https://i.imgur.com/cB9xxIg.jpeg",
     "lastTime": "28 Mar"
   },
   {
     "propertyName": "Las peras 3351",
     "lastMessage": "Thankyou, It's awesome",
-    "imageURL": "images/userImage5.jpeg",
+    "imageURL": "https://i.imgur.com/t95JyAn.jpg",
     "lastTime": "23 Mar"
   },
   {
     "propertyName": "Manuel Ossandón 13",
     "lastMessage": "will update you in evening",
-    "imageURL": "images/userImage6.jpeg",
+    "imageURL": "https://i.imgur.com/sqRgJ4d.jpg",
     "lastTime": "17 Mar"
   },
   {
     "propertyName": "Eliodoro Yañez 772",
     "lastMessage": "Can you please share the file?",
-    "imageURL": "images/userImage7.jpeg",
+    "imageURL": "https://i.imgur.com/hZvLNya.jpg",
     "lastTime": "24 Feb"
   },
   {
     "propertyName": "Calle Larga 334 parcela 3",
     "lastMessage": "How are you?",
-    "imageURL": "images/userImage8.jpeg",
+    "imageURL": "https://i.imgur.com/aMdsdiK.jpg",
     "lastTime": "18 Feb"
   },
 ];

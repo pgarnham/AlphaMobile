@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:alpha_mobile/screens/chatDetailPage.dart';
 
 class ConversationList extends StatefulWidget {
-  String name;
-  String messageText;
-  String imageUrl;
-  String time;
-  bool isMessageRead;
+  final String name;
+  final String messageText;
+  final String imageUrl;
+  final String time;
+  final bool isMessageRead;
   ConversationList(
       {@required this.name,
       @required this.messageText,
@@ -26,8 +26,9 @@ class _ConversationListState extends State<ConversationList> {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
           return ChatDetailPage(
             propertyName: widget.name,
-            messages:
-                chatMessages, // Esto se debería pedir al momento de abrir el chat
+            messages: chatMessages,
+            imageUrl: widget
+                .imageUrl, // Esto se debería pedir al momento de abrir el chat
           );
         }));
       },

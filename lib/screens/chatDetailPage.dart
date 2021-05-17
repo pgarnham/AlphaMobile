@@ -4,10 +4,11 @@ import 'package:alpha_mobile/widgets/chatBubble.dart';
 class ChatDetailPage extends StatefulWidget {
   String propertyName;
   List<Map> messages;
-  ChatDetailPage({
-    @required this.propertyName,
-    @required this.messages,
-  });
+  String imageUrl;
+  ChatDetailPage(
+      {@required this.propertyName,
+      @required this.messages,
+      @required this.imageUrl});
   @override
   _ChatDetailPageState createState() => _ChatDetailPageState();
 }
@@ -38,8 +39,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   width: 2,
                 ),
                 CircleAvatar(
-                  backgroundImage: NetworkImage(
-                      "https://randomuser.me/api/portraits/men/5.jpg"),
+                  backgroundImage: NetworkImage(widget.imageUrl),
                   maxRadius: 20,
                 ),
                 SizedBox(
