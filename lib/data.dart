@@ -34,3 +34,65 @@ List<Map> properties = [
   },
 ];
 // superficie, contacto, dirección, precio, factibilidad servicios y una galería
+
+List<Map> propertiesChats = [
+  {
+    "name": "Jane Russel",
+    "messageText": "Awesome Setup",
+    "imageURL": "images/userImage1.jpeg",
+    "time": "Now"
+  },
+  {
+    "name": "Glady's Murphy",
+    "messageText": "That's Great",
+    "imageURL": "images/userImage2.jpeg",
+    "time": "Yesterday"
+  },
+  {
+    "name": "Jorge Henry",
+    "messageText": "Hey where are you?",
+    "imageURL": "images/userImage3.jpeg",
+    "time": "31 Mar"
+  },
+  {
+    "name": "Philip Fox",
+    "messageText": "Busy! Call me in 20 mins",
+    "imageURL": "images/userImage4.jpeg",
+    "time": "28 Mar"
+  },
+  {
+    "name": "Debra Hawkins",
+    "messageText": "Thankyou, It's awesome",
+    "imageURL": "images/userImage5.jpeg",
+    "time": "23 Mar"
+  },
+  {
+    "name": "Jacob Pena",
+    "messageText": "will update you in evening",
+    "imageURL": "images/userImage6.jpeg",
+    "time": "17 Mar"
+  },
+  {
+    "name": "Andrey Jones",
+    "messageText": "Can you please share the file?",
+    "imageURL": "images/userImage7.jpeg",
+    "time": "24 Feb"
+  },
+  {
+    "name": "John Wick",
+    "messageText": "How are you?",
+    "imageURL": "images/userImage8.jpeg",
+    "time": "18 Feb"
+  },
+];
+
+List<Map> chatMessages = [
+  {"messageContent": "Hello, Will", "messageType": "receiver"},
+  {"messageContent": "How have you been?", "messageType": "receiver"},
+  {
+    "messageContent": "Hey Kriss, I am doing fine dude. wbu?",
+    "messageType": "sender"
+  },
+  {"messageContent": "ehhhh, doing OK.", "messageType": "receiver"},
+  {"messageContent": "Is there any thing wrong?", "messageType": "sender"},
+];
