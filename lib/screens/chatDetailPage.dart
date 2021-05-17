@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:alpha_mobile/data.dart';
 
 class ChatDetailPage extends StatefulWidget {
+  String propertyName;
+  List<Map> messages;
+  ChatDetailPage({
+    @required this.propertyName,
+    @required this.messages,
+  });
   @override
   _ChatDetailPageState createState() => _ChatDetailPageState();
 }
 
 class _ChatDetailPageState extends State<ChatDetailPage> {
-  List<Map> messages = chatMessages;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +51,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Text(
-                        "Kriss Benwat",
+                        widget.propertyName,
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
@@ -55,7 +59,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         height: 6,
                       ),
                       Text(
-                        "Online",
+                        "Disponible",
                         style: TextStyle(
                             color: Colors.grey.shade600, fontSize: 13),
                       ),
@@ -74,7 +78,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       body: Stack(
         children: <Widget>[
           ListView.builder(
-            itemCount: messages.length,
+            itemCount: widget.messages.length,
             shrinkWrap: true,
             padding: EdgeInsets.only(top: 10, bottom: 10),
             physics: NeverScrollableScrollPhysics(),
@@ -83,19 +87,21 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                 padding:
                     EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
                 child: Align(
-                  alignment: (messages[index]["messageType"] == "receiver"
-                      ? Alignment.topLeft
-                      : Alignment.topRight),
+                  alignment:
+                      (widget.messages[index]["messageType"] == "receiver"
+                          ? Alignment.topLeft
+                          : Alignment.topRight),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: (messages[index]["messageType"] == "receiver"
-                          ? Colors.grey.shade200
-                          : Colors.blue[200]),
+                      color:
+                          (widget.messages[index]["messageType"] == "receiver"
+                              ? Colors.grey.shade200
+                              : Colors.blue[200]),
                     ),
                     padding: EdgeInsets.all(16),
                     child: Text(
-                      messages[index]["messageContent"],
+                      widget.messages[index]["messageContent"],
                       style: TextStyle(fontSize: 15),
                     ),
                   ),

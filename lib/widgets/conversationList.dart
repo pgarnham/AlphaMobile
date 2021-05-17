@@ -1,3 +1,4 @@
+import 'package:alpha_mobile/data.dart';
 import 'package:flutter/material.dart';
 import 'package:alpha_mobile/screens/chatDetailPage.dart';
 
@@ -23,7 +24,10 @@ class _ConversationListState extends State<ConversationList> {
     return GestureDetector(
       onTap: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
-          return ChatDetailPage();
+          return ChatDetailPage(
+            propertyName: widget.name,
+            messages: chatMessages,
+          );
         }));
       },
       child: Container(

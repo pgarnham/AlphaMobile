@@ -89,10 +89,10 @@ class _MessagesPageState extends State<MessagesPage> {
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
                 return ConversationList(
-                  name: chatUsers[index]["name"],
-                  messageText: chatUsers[index]["messageText"],
+                  name: chatUsers[index]["propertyName"],
+                  messageText: chatUsers[index]["lastMessage"],
                   imageUrl: chatUsers[index]["imageURL"],
-                  time: chatUsers[index]["time"],
+                  time: chatUsers[index]["lastTime"],
                   isMessageRead: (index == 0 || index == 3) ? true : false,
                 );
               },
