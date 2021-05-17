@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:alpha_mobile/widgets/chatBubble.dart';
 
 class ChatDetailPage extends StatefulWidget {
   String propertyName;
@@ -82,98 +83,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             padding: EdgeInsets.only(top: 10, bottom: 10),
             physics: NeverScrollableScrollPhysics(),
             itemBuilder: (context, index) {
-              return Expanded(
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: widget.messages[index]["messageType"] == "receiver"
-                          ? 24
-                          : 7,
-                      right: widget.messages[index]["messageType"] == "receiver"
-                          ? 7
-                          : 24),
-                  margin: EdgeInsets.symmetric(vertical: 7),
-                  width: MediaQuery.of(context).size.width,
-                  alignment: widget.messages[index]["messageType"] == "receiver"
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    decoration: BoxDecoration(
-                        color:
-                            widget.messages[index]["messageType"] == "receiver"
-                                ? Colors.blue[400]
-                                : Colors.grey[200],
-                        borderRadius:
-                            widget.messages[index]["messageType"] == "receiver"
-                                ? BorderRadius.only(
-                                    topRight: Radius.circular(17),
-                                    topLeft: Radius.circular(17),
-                                    bottomLeft: Radius.circular(17))
-                                : BorderRadius.only(
-                                    topLeft: Radius.circular(17),
-                                    topRight: Radius.circular(17),
-                                    bottomRight: Radius.circular(17),
-                                    bottomLeft: Radius.elliptical(-20, -3))),
-                    child: Column(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text(
-                              widget.messages[index]["author"].toUpperCase(),
-                              style: TextStyle(
-                                color: widget.messages[index]["messageType"] ==
-                                        "receiver"
-                                    ? Colors.white
-                                    : Colors.black,
-                                letterSpacing: 1.5,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              widget.messages[index]["timeStamp"].toUpperCase(),
-                              style: TextStyle(
-                                  color: widget.messages[index]
-                                              ["messageType"] ==
-                                          "receiver"
-                                      ? Colors.white
-                                      : Color(0xFF9E9E9E),
-                                  letterSpacing: 1.5,
-                                  fontWeight: FontWeight.w500),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Container(
-                          alignment: widget.messages[index]["messageType"] ==
-                                  "receiver"
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Text(
-                              widget.messages[index]["messageType"] ==
-                                      "receiver"
-                                  ? widget.messages[index]["messageContent"]
-                                  : widget.messages[index]["messageContent"],
-                              textAlign: TextAlign.left,
-                              style: TextStyle(
-                                  color: widget.messages[index]
-                                              ["messageType"] ==
-                                          "receiver"
-                                      ? Colors.white
-                                      : Colors.black,
-                                  letterSpacing: 0.4,
-                                  fontSize: 15)),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              );
+              return ChatBubble(
+                  message: widget.messages[index]["messageContent"],
+                  isAuthor: widget.messages[index]["messageType"] == "receiver",
+                  name: widget.messages[index]["author"],
+                  date: widget.messages[index]["timeStamp"]);
             },
           ),
           Align(
