@@ -26,7 +26,8 @@ class _ConversationListState extends State<ConversationList> {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
           return ChatDetailPage(
             propertyName: widget.name,
-            messages: chatMessages,
+            messages:
+                chatMessages, // Esto se debería pedir al momento de abrir el chat
           );
         }));
       },

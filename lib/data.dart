@@ -37,49 +37,49 @@ List<Map> properties = [
 
 List<Map> propertiesChats = [
   {
-    "propertyName": "Jane Russel",
+    "propertyName": "Parcela 10 los aromos",
     "lastMessage": "Awesome Setup",
     "imageURL": "images/userImage1.jpeg",
     "lastTime": "Now"
   },
   {
-    "propertyName": "Glady's Murphy",
+    "propertyName": "Campo Exterior Casa 2",
     "lastMessage": "That's Great",
     "imageURL": "images/userImage2.jpeg",
     "lastTime": "Yesterday"
   },
   {
-    "propertyName": "Jorge Henry",
+    "propertyName": "Sitio San Juan km 46",
     "lastMessage": "Hey where are you?",
     "imageURL": "images/userImage3.jpeg",
     "lastTime": "31 Mar"
   },
   {
-    "propertyName": "Philip Fox",
+    "propertyName": "José Hidalgo 223 casa C",
     "lastMessage": "Busy! Call me in 20 mins",
     "imageURL": "images/userImage4.jpeg",
     "lastTime": "28 Mar"
   },
   {
-    "propertyName": "Debra Hawkins",
+    "propertyName": "Las peras 3351",
     "lastMessage": "Thankyou, It's awesome",
     "imageURL": "images/userImage5.jpeg",
     "lastTime": "23 Mar"
   },
   {
-    "propertyName": "Jacob Pena",
+    "propertyName": "Manuel Ossandón 13",
     "lastMessage": "will update you in evening",
     "imageURL": "images/userImage6.jpeg",
     "lastTime": "17 Mar"
   },
   {
-    "propertyName": "Andrey Jones",
+    "propertyName": "Eliodoro Yañez 772",
     "lastMessage": "Can you please share the file?",
     "imageURL": "images/userImage7.jpeg",
     "lastTime": "24 Feb"
   },
   {
-    "propertyName": "John Wick",
+    "propertyName": "Calle Larga 334 parcela 3",
     "lastMessage": "How are you?",
     "imageURL": "images/userImage8.jpeg",
     "lastTime": "18 Feb"
@@ -87,12 +87,34 @@ List<Map> propertiesChats = [
 ];
 
 List<Map> chatMessages = [
-  {"messageContent": "Hello, Will", "messageType": "receiver"},
-  {"messageContent": "How have you been?", "messageType": "receiver"},
+  {
+    "messageContent": "Hello, Will",
+    "messageType": "sender",
+    "author": "Cristobal Jones",
+    "timeStamp": "23/05/2021"
+  },
+  {
+    "messageContent": "How have you been?",
+    "messageType": "sender",
+    "author": "Roberto Vidal",
+    "timeStamp": "23/05/2021"
+  },
   {
     "messageContent": "Hey Kriss, I am doing fine dude. wbu?",
-    "messageType": "sender"
+    "messageType": "receiver",
+    "author": "Pablo Garnham",
+    "timeStamp": "23/05/2021"
   },
-  {"messageContent": "ehhhh, doing OK.", "messageType": "receiver"},
-  {"messageContent": "Is there any thing wrong?", "messageType": "sender"},
+  {
+    "messageContent": "ehhhh, doing OK.",
+    "messageType": "sender",
+    "author": "Roberto Vidal",
+    "timeStamp": "23/05/2021"
+  },
+  {
+    "messageContent": "Is there any thing wrong?",
+    "messageType": "receiver",
+    "author": "Pablo Garnham",
+    "timeStamp": "23/05/2021"
+  },
 ];
