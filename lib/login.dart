@@ -1,7 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:alpha_mobile/navbar.dart';
 import 'package:alpha_mobile/register.dart';
+import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -81,17 +87,42 @@ class _LoginPageState extends State<LoginPage> {
                     if (currentForm.validate()) {
                       currentForm.save();
                       try {
-                        Timer(
-                          const Duration(milliseconds: 2000),
-                          () {
-                            setState(
-                              () {
-                                _isLoading = false;
-                              },
-                            );
-                          },
+                        final response = await http.post(
+                          Uri.parse(apiUrl + loginPath),
+                          body: json.encode({
+                            "email": _inputMail,
+                            "password": _inputPassword,
+                          }),
+                          headers: {"Content-Type": "application/json"},
                         );
-                      } catch (e) {} // Manejar Login con Backend
+
+                        print(response.statusCode);
+                        print(jsonDecode(response.body));
+
+                        if (response.statusCode == 200) {
+                          print("Success");
+                          SharedPreferences sharedPreferences =
+                              await SharedPreferences.getInstance();
+
+                          sharedPreferences.setBool("isLogged", true);
+                          sharedPreferences.setString(
+                              "apiKey", jsonDecode(response.body)['api_key']);
+
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => NavBar()),
+                              (Route<dynamic> route) => false);
+                        } else {
+                          print("Error");
+                          setState(
+                            () {
+                              _isLoading = false;
+                            },
+                          );
+                        }
+                      } catch (e) {
+                        print(e);
+                      }
                     } else {
                       setState(() {
                         _isLoading = false;

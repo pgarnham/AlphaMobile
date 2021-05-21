@@ -1,6 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:alpha_mobile/navbar.dart';
+import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -118,17 +124,51 @@ class _SignupPageState extends State<SignupPage> {
                     if (currentForm.validate()) {
                       currentForm.save();
                       try {
-                        Timer(
-                          const Duration(milliseconds: 2000),
+                        final response = await http.post(
+                          Uri.parse(apiUrl + signupPath),
+                          body: json.encode({
+                            "first_name": _inputName,
+                            "last_name": "",
+                            "user_type": 0,
+                            "date_of_birth": "2021-05-21",
+                            "email": _inputMail,
+                            "password": _inputPassword
+                          }),
+                          headers: {"Content-Type": "application/json"},
+                        );
+
+                        print(response.statusCode);
+                        print(jsonDecode(response.body));
+
+                        if (response.statusCode == 200) {
+                          print("Success");
+                          SharedPreferences sharedPreferences =
+                              await SharedPreferences.getInstance();
+
+                          sharedPreferences.setBool("isLogged", true);
+                          sharedPreferences.setString(
+                              "apiKey", jsonDecode(response.body)['api_key']);
+
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => NavBar()),
+                              (Route<dynamic> route) => false);
+                        } else {
+                          print("Failed");
+                          setState(
+                            () {
+                              _isLoading = false;
+                            },
+                          );
+                        }
+                      } catch (e) {
+                        print(e);
+                        setState(
                           () {
-                            setState(
-                              () {
-                                _isLoading = false;
-                              },
-                            );
+                            _isLoading = false;
                           },
                         );
-                      } catch (e) {} // Manejar SignUp con Backend
+                      }
                     } else {
                       setState(() {
                         _isLoading = false;
@@ -136,7 +176,7 @@ class _SignupPageState extends State<SignupPage> {
                     }
                   }
                 },
-                child: Text("Registrarme"),
+                child: _isLoading ? Text("Cargando...") : Text("Registrarme"),
               ),
               SizedBox(height: 10),
               Row(
