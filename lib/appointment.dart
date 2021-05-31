@@ -127,7 +127,7 @@ class _MakeAppointmentState extends State<MakeAppointment> {
                           "datetime": finalDateTime,
                           "status": "status",
                           "user_id": userId,
-                          "property_id": 1
+                          "property_id": widget.propertyId
                         }),
                         headers: {
                           "Content-Type": "application/json",

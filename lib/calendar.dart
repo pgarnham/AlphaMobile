@@ -25,6 +25,9 @@ class _CalendarPageState extends State<CalendarPage> {
 
   void getData() async {
     List<Appointment> appointments = [];
+    setState(() {
+      _isLoading = true;
+    });
     try {
       SharedPreferences sharedPreferences =
           await SharedPreferences.getInstance();
@@ -40,10 +43,9 @@ class _CalendarPageState extends State<CalendarPage> {
         },
       );
 
-      print(response.statusCode);
-      print(jsonDecode(response.body));
+      //print(response.statusCode);
+      //print(jsonDecode(response.body));
       await Future.forEach(jsonDecode(response.body), (appoint) async {
-        print(appoint);
         var year = int.parse(appoint["datetime"].substring(0, 4));
         var month = int.parse(appoint["datetime"].substring(5, 7));
         var day = int.parse(appoint["datetime"].substring(8, 10));
@@ -52,12 +54,13 @@ class _CalendarPageState extends State<CalendarPage> {
 
         final DateTime startTime = DateTime(year, month, day, hour, minute, 0);
         final DateTime endTime = startTime.add(Duration(hours: 2));
+        String subject = appoint["property"]["title"];
 
         appointments.add(
           Appointment(
             startTime: startTime,
             endTime: endTime,
-            subject: "Visita Terreno",
+            subject: subject,
             color: Colors.blue,
           ),
         );
@@ -69,6 +72,9 @@ class _CalendarPageState extends State<CalendarPage> {
       });
     } catch (e) {
       print(e);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -164,29 +170,47 @@ class _CalendarPageState extends State<CalendarPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Calendario"),
-      ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SfCalendar(
-              controller: _controller,
-              view: CalendarView.month,
-              allowedViews: [
-                CalendarView.day,
-                CalendarView.week,
-                CalendarView.month,
-              ],
-              onTap: calendarTapped,
-              firstDayOfWeek: 1,
-              initialDisplayDate: DateTime.now(),
-              dataSource: MeetingDataSource(myAppointments),
-              appointmentTextStyle: TextStyle(fontSize: 18),
-              selectionDecoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.3),
-                border: Border.all(color: Colors.blue, width: 1),
-                borderRadius: const BorderRadius.all(Radius.circular(4)),
-                shape: BoxShape.rectangle,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 20.0),
+            child: GestureDetector(
+              onTap: () {
+                getData();
+              },
+              child: Icon(
+                Icons.refresh,
+                size: 30.0,
+                color: Colors.grey[200],
               ),
             ),
+          )
+        ],
+      ),
+      body: Container(
+        height: MediaQuery.of(context).size.height - 130,
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : SfCalendar(
+                controller: _controller,
+                view: CalendarView.month,
+                allowedViews: [
+                  CalendarView.day,
+                  CalendarView.week,
+                  CalendarView.month,
+                ],
+                onTap: calendarTapped,
+                firstDayOfWeek: 1,
+                initialDisplayDate: DateTime.now(),
+                dataSource: MeetingDataSource(myAppointments),
+                appointmentTextStyle: TextStyle(fontSize: 18),
+                selectionDecoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.3),
+                  border: Border.all(color: Colors.blue, width: 1),
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  shape: BoxShape.rectangle,
+                ),
+              ),
+      ),
     );
   }
 }
