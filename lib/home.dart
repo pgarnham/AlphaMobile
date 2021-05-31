@@ -37,8 +37,8 @@ class _PropertiesPageState extends State<PropertiesPage> {
         },
       );
 
-      print(response.statusCode);
-      print(jsonDecode(response.body));
+      //print(response.statusCode);
+      //print(jsonDecode(response.body));
       return jsonDecode(response.body);
     } catch (e) {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -49,135 +49,147 @@ class _PropertiesPageState extends State<PropertiesPage> {
     return [];
   }
 
+  Future<void> reloadData() async {
+    setState(() {
+      apiProperties = getData();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Text('Propiedades'),
         ),
-        body: FutureBuilder<List>(
-          future: apiProperties,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData) {
-                return ListView.builder(
-                  itemCount: snapshot.data.length,
-                  itemBuilder: (BuildContext ctx, int index) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => PropertiesDetail(
-                                  snapshot.data[index]["id"],
-                                  snapshot.data[index])),
-                        );
-                      },
-                      child: Container(
-                        height: 480,
-                        child: Card(
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8),
-                                child: Container(
-                                  height: 300,
-                                  width: MediaQuery.of(context).size.width,
-                                  child: Image.asset(
-                                    'assets/parcela01.jpg',
-                                    fit: BoxFit.cover,
+        body: RefreshIndicator(
+          onRefresh: reloadData,
+          child: FutureBuilder<List>(
+            future: apiProperties,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasData) {
+                  return ListView.builder(
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext ctx, int index) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => PropertiesDetail(
+                                    snapshot.data[index]["id"],
+                                    snapshot.data[index])),
+                          );
+                        },
+                        child: Container(
+                          height: 480,
+                          child: Card(
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  child: Container(
+                                    height: 300,
+                                    width: MediaQuery.of(context).size.width,
+                                    child: Image.asset(
+                                      'assets/parcela01.jpg',
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Text(
-                                snapshot.data[index]["title"],
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 20),
-                              ),
-                              Text(
-                                snapshot.data[index]["address"],
-                                style: TextStyle(fontSize: 17),
-                              ),
-                              SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  snapshot.data[index]["water"]
-                                      ? Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 8.0),
-                                          child: FaIcon(FontAwesomeIcons.faucet,
-                                              color: Colors.black45),
-                                        )
-                                      : SizedBox.shrink(),
-                                  snapshot.data[index]["electricity"]
-                                      ? Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 8.0),
-                                          child: FaIcon(FontAwesomeIcons.bolt,
-                                              color: Colors.black45),
-                                        )
-                                      : SizedBox.shrink(),
-                                  snapshot.data[index]["sewer"]
-                                      ? Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 8.0),
-                                          child: FaIcon(FontAwesomeIcons.toilet,
-                                              color: Colors.black45),
-                                        )
-                                      : SizedBox.shrink(),
-                                ],
-                              ),
-                              SizedBox(height: 10),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Row(
+                                Text(
+                                  snapshot.data[index]["title"],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
+                                ),
+                                Text(
+                                  snapshot.data[index]["address"],
+                                  style: TextStyle(fontSize: 17),
+                                ),
+                                SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Precio: " +
-                                              snapshot.data[index]["price"]
-                                                  .toString() +
-                                              " UF",
-                                          style: TextStyle(fontSize: 17),
-                                        ),
-                                        Text(
-                                          "Superficie: " +
-                                              snapshot.data[index]["area"]
-                                                  .toString() +
-                                              " m2",
-                                          style: TextStyle(fontSize: 17),
-                                        ),
-                                        Text(
-                                          "Contacto: " +
-                                              snapshot.data[index]["contact"],
-                                          style: TextStyle(fontSize: 17),
-                                        )
-                                      ],
-                                    ),
+                                    snapshot.data[index]["water"]
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.0),
+                                            child: FaIcon(
+                                                FontAwesomeIcons.faucet,
+                                                color: Colors.black45),
+                                          )
+                                        : SizedBox.shrink(),
+                                    snapshot.data[index]["electricity"]
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.0),
+                                            child: FaIcon(FontAwesomeIcons.bolt,
+                                                color: Colors.black45),
+                                          )
+                                        : SizedBox.shrink(),
+                                    snapshot.data[index]["sewer"]
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.0),
+                                            child: FaIcon(
+                                                FontAwesomeIcons.toilet,
+                                                color: Colors.black45),
+                                          )
+                                        : SizedBox.shrink(),
                                   ],
                                 ),
-                              )
-                            ],
+                                SizedBox(height: 10),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Precio: " +
+                                                snapshot.data[index]["price"]
+                                                    .toString() +
+                                                " UF",
+                                            style: TextStyle(fontSize: 17),
+                                          ),
+                                          Text(
+                                            "Superficie: " +
+                                                snapshot.data[index]["area"]
+                                                    .toString() +
+                                                " m2",
+                                            style: TextStyle(fontSize: 17),
+                                          ),
+                                          Text(
+                                            "Contacto: " +
+                                                snapshot.data[index]["contact"],
+                                            style: TextStyle(fontSize: 17),
+                                          )
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                );
+                      );
+                    },
+                  );
+                } else {
+                  return Center(child: Text("No hay propiedades"));
+                }
               } else {
-                return Center(child: Text("No hay propiedades"));
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
               }
-            } else {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
+            },
+          ),
         ));
   }
 }
