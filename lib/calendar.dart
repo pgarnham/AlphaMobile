@@ -1,5 +1,10 @@
+import 'dart:convert';
+
+import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:http/http.dart' as http;
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -8,10 +13,63 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> {
   CalendarController _controller;
+  bool _isLoading = true;
+  List<Appointment> myAppointments = [];
+
   @override
   void initState() {
     _controller = CalendarController();
     super.initState();
+    getData();
+  }
+
+  void getData() async {
+    List<Appointment> appointments = [];
+    try {
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+
+      var userApiKey = sharedPreferences.getString("apiKey");
+      var userId = sharedPreferences.getInt("userId");
+
+      final response = await http.get(
+        Uri.parse(apiUrl + getUserAppointment + userId.toString()),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + userApiKey
+        },
+      );
+
+      print(response.statusCode);
+      print(jsonDecode(response.body));
+      await Future.forEach(jsonDecode(response.body), (appoint) async {
+        print(appoint);
+        var year = int.parse(appoint["datetime"].substring(0, 4));
+        var month = int.parse(appoint["datetime"].substring(5, 7));
+        var day = int.parse(appoint["datetime"].substring(8, 10));
+        var hour = int.parse(appoint["datetime"].substring(11, 13));
+        var minute = int.parse(appoint["datetime"].substring(14, 16));
+
+        final DateTime startTime = DateTime(year, month, day, hour, minute, 0);
+        final DateTime endTime = startTime.add(Duration(hours: 2));
+
+        appointments.add(
+          Appointment(
+            startTime: startTime,
+            endTime: endTime,
+            subject: "Visita Terreno",
+            color: Colors.blue,
+          ),
+        );
+      });
+
+      setState(() {
+        myAppointments = appointments;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print(e);
+    }
   }
 
   void calendarTapped(CalendarTapDetails calendarTapDetails) {
@@ -107,56 +165,30 @@ class _CalendarPageState extends State<CalendarPage> {
       appBar: AppBar(
         title: Text("Calendario"),
       ),
-      body: SfCalendar(
-        controller: _controller,
-        view: CalendarView.month,
-        allowedViews: [
-          CalendarView.day,
-          CalendarView.week,
-          CalendarView.month,
-        ],
-        onTap: calendarTapped,
-        firstDayOfWeek: 1,
-        initialDisplayDate: DateTime.now(),
-        dataSource: MeetingDataSource(getAppointments()),
-        appointmentTextStyle: TextStyle(fontSize: 18),
-        selectionDecoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.3),
-          border: Border.all(color: Colors.blue, width: 1),
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-          shape: BoxShape.rectangle,
-        ),
-      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SfCalendar(
+              controller: _controller,
+              view: CalendarView.month,
+              allowedViews: [
+                CalendarView.day,
+                CalendarView.week,
+                CalendarView.month,
+              ],
+              onTap: calendarTapped,
+              firstDayOfWeek: 1,
+              initialDisplayDate: DateTime.now(),
+              dataSource: MeetingDataSource(myAppointments),
+              appointmentTextStyle: TextStyle(fontSize: 18),
+              selectionDecoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.3),
+                border: Border.all(color: Colors.blue, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
+                shape: BoxShape.rectangle,
+              ),
+            ),
     );
   }
-}
-
-List<Appointment> getAppointments() {
-  List<Appointment> meetings = [];
-  final DateTime today = DateTime.now();
-  final DateTime startTime =
-      DateTime(today.year, today.month, today.day, 9, 0, 0);
-  final DateTime endTime = startTime.add(Duration(hours: 2));
-
-  meetings.add(
-    Appointment(
-      startTime: startTime,
-      endTime: endTime,
-      subject: "Visita Terreno",
-      color: Colors.blue,
-    ),
-  );
-
-  meetings.add(
-    Appointment(
-      startTime: DateTime(2021, 05, 20, 12, 0, 0),
-      endTime: DateTime(2021, 05, 20, 15, 0, 0),
-      subject: "Visita Parcela",
-      color: Colors.blue,
-    ),
-  );
-
-  return meetings;
 }
 
 class MeetingDataSource extends CalendarDataSource {

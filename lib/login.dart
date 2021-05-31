@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:alpha_mobile/navbar.dart';
@@ -105,6 +104,8 @@ class _LoginPageState extends State<LoginPage> {
                               await SharedPreferences.getInstance();
 
                           sharedPreferences.setBool("isLogged", true);
+                          sharedPreferences.setInt(
+                              "userId", jsonDecode(response.body)['id']);
                           sharedPreferences.setString(
                               "apiKey", jsonDecode(response.body)['api_key']);
 
