@@ -1,4 +1,5 @@
 import 'package:alpha_mobile/account.dart';
+import 'package:alpha_mobile/auxiliar.dart';
 import 'package:alpha_mobile/calendar.dart';
 import 'package:alpha_mobile/home.dart';
 import 'package:alpha_mobile/login.dart';
@@ -26,8 +27,14 @@ class _NavBarState extends State<NavBar> {
     MessagesPage(),
     NotificationsPage(),
     CalendarPage(),
-    LoginPage()
+    AccountPage()
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    SaveContext().init(context);
+  }
 
   @override
   Widget build(BuildContext context) {
