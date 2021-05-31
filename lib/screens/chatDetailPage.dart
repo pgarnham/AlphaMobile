@@ -91,10 +91,17 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
       newMessagesList.add(jsonDecode(response.body));
+      await reloadMessages();
     } else {
       // If that call was not successful, throw an error.
       throw Exception('Failed to load Chats');
     }
+  }
+
+  Future<void> reloadMessages() async {
+    setState(() {
+      chatMessages = loadMessages();
+    });
   }
 
   @override
@@ -149,9 +156,13 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.settings,
-                  color: Colors.black54,
+                GestureDetector(
+                  onTap: reloadMessages,
+                  child: Icon(
+                    Icons.refresh,
+                    size: 30.0,
+                    color: Colors.blue[200],
+                  ),
                 ),
               ],
             ),
@@ -165,23 +176,33 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
                   if (snapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: snapshot.data.length,
-                      shrinkWrap: true,
-                      padding: EdgeInsets.only(top: 10, bottom: 10),
-                      physics: NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        return ChatBubble(
-                            message: snapshot.data[index]["content"],
-                            isAuthor: isAuthorList[index],
-                            name: snapshot.data[index]["sent_by"]
-                                    ["first_name"] +
-                                " " +
-                                snapshot.data[index]["sent_by"]["last_name"],
-                            date: snapshot.data[index]["timestamp"]
-                                .substring(0, 9));
-                      },
-                    );
+                    return SingleChildScrollView(
+                        physics: BouncingScrollPhysics(),
+                        child: Column(
+                          children: [
+                            ListView.builder(
+                              itemCount: snapshot.data.length,
+                              shrinkWrap: true,
+                              padding: EdgeInsets.only(top: 10, bottom: 10),
+                              physics: NeverScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                return ChatBubble(
+                                    message: snapshot.data[index]["content"],
+                                    isAuthor: isAuthorList[index],
+                                    name: snapshot.data[index]["sent_by"]
+                                            ["first_name"] +
+                                        " " +
+                                        snapshot.data[index]["sent_by"]
+                                            ["last_name"],
+                                    date: snapshot.data[index]["timestamp"]
+                                        .substring(0, 9));
+                              },
+                            ),
+                            SizedBox(
+                              height: 160,
+                            )
+                          ],
+                        ));
                   } else {
                     return Center(child: Text("No hay propiedades"));
                   }
@@ -236,7 +257,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   FloatingActionButton(
                     onPressed: () async {
                       setState(() async {
-                        newMessage();
+                        await newMessage();
                       });
                     },
                     child: Icon(

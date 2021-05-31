@@ -37,12 +37,25 @@ class _MessagesPageState extends State<MessagesPage> {
     }
   }
 
+  Future<void> reloadChats() async {
+    setState(() {
+      chatUsers = loadChats();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Mensajes'),
-      ),
+      appBar: AppBar(title: Text('Mensajes'), actions: [
+        GestureDetector(
+          onTap: reloadChats,
+          child: Icon(
+            Icons.refresh,
+            size: 30.0,
+            color: Colors.white,
+          ),
+        )
+      ]),
       body: SingleChildScrollView(
         physics: BouncingScrollPhysics(),
         child: Column(
