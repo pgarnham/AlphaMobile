@@ -1,6 +1,12 @@
-import 'package:alpha_mobile/data.dart';
+import 'dart:convert';
+
+import 'package:alpha_mobile/appointment.dart';
+import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -8,95 +14,190 @@ class PropertiesPage extends StatefulWidget {
 }
 
 class _PropertiesPageState extends State<PropertiesPage> {
+  Future<List> apiProperties;
+
+  @override
+  void initState() {
+    super.initState();
+    apiProperties = getData();
+  }
+
+  Future<List> getData() async {
+    try {
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+
+      var userApiKey = sharedPreferences.getString("apiKey");
+
+      final response = await http.get(
+        Uri.parse(apiUrl + getPropertiesPath),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + userApiKey
+        },
+      );
+
+      //print(response.statusCode);
+      //print(jsonDecode(response.body));
+      return jsonDecode(response.body);
+    } catch (e) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Intenta nuevamente')));
+      print(e);
+    }
+    return [];
+  }
+
+  Future<void> reloadData() async {
+    setState(() {
+      apiProperties = getData();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Propiedades'),
-      ),
-      body: ListView.builder(
-        itemCount: properties.length,
-        itemBuilder: (BuildContext ctx, int index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => PropertiesDetail(index)),
-              );
-            },
-            child: Container(
-              height: 480,
-              child: Card(
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Container(
-                        height: 300,
-                        width: MediaQuery.of(context).size.width,
-                        child: Image.asset(
-                          'assets/parcela01.jpg',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      properties[index]["title"],
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                    ),
-                    Text(
-                      properties[index]["address"],
-                      style: TextStyle(fontSize: 17),
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.lightbulb, color: Colors.black45),
-                        Icon(Icons.local_drink, color: Colors.black45),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Precio: " + properties[index]["price"],
-                                style: TextStyle(fontSize: 17),
-                              ),
-                              Text(
-                                "Superficie: " + properties[index]["surface"],
-                                style: TextStyle(fontSize: 17),
-                              ),
-                              Text(
-                                "Contacto: " + properties[index]["contact"],
-                                style: TextStyle(fontSize: 17),
-                              )
-                            ],
+        appBar: AppBar(
+          title: Text('Propiedades'),
+        ),
+        body: RefreshIndicator(
+          onRefresh: reloadData,
+          child: FutureBuilder<List>(
+            future: apiProperties,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasData) {
+                  return ListView.builder(
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext ctx, int index) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => PropertiesDetail(
+                                    snapshot.data[index]["id"],
+                                    snapshot.data[index])),
+                          );
+                        },
+                        child: Container(
+                          height: 480,
+                          child: Card(
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  child: Container(
+                                    height: 300,
+                                    width: MediaQuery.of(context).size.width,
+                                    child: Image.asset(
+                                      'assets/parcela01.jpg',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  snapshot.data[index]["title"],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
+                                ),
+                                Text(
+                                  snapshot.data[index]["address"],
+                                  style: TextStyle(fontSize: 17),
+                                ),
+                                SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    snapshot.data[index]["water"]
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.0),
+                                            child: FaIcon(
+                                                FontAwesomeIcons.faucet,
+                                                color: Colors.black45),
+                                          )
+                                        : SizedBox.shrink(),
+                                    snapshot.data[index]["electricity"]
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.0),
+                                            child: FaIcon(FontAwesomeIcons.bolt,
+                                                color: Colors.black45),
+                                          )
+                                        : SizedBox.shrink(),
+                                    snapshot.data[index]["sewer"]
+                                        ? Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.0),
+                                            child: FaIcon(
+                                                FontAwesomeIcons.toilet,
+                                                color: Colors.black45),
+                                          )
+                                        : SizedBox.shrink(),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Precio: " +
+                                                snapshot.data[index]["price"]
+                                                    .toString() +
+                                                " UF",
+                                            style: TextStyle(fontSize: 17),
+                                          ),
+                                          Text(
+                                            "Superficie: " +
+                                                snapshot.data[index]["area"]
+                                                    .toString() +
+                                                " m2",
+                                            style: TextStyle(fontSize: 17),
+                                          ),
+                                          Text(
+                                            "Contacto: " +
+                                                snapshot.data[index]["contact"],
+                                            style: TextStyle(fontSize: 17),
+                                          )
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+                        ),
+                      );
+                    },
+                  );
+                } else {
+                  return Center(child: Text("No hay propiedades"));
+                }
+              } else {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+            },
+          ),
+        ));
   }
 }
 
 class PropertiesDetail extends StatefulWidget {
-  final int index;
-  PropertiesDetail(this.index);
+  final int propertyId;
+  final Map propertyInfo;
+  PropertiesDetail(this.propertyId, this.propertyInfo);
   @override
   _PropertiesDetailState createState() => _PropertiesDetailState();
 }
@@ -172,73 +273,47 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => MakeAppointment()),
+                  MaterialPageRoute(
+                      builder: (context) => MakeAppointment(widget.propertyId)),
                 );
-                /* showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      content: Container(
-                        height: MediaQuery.of(context).size.height * 0.5,
-                        child: Column(
-                          children: [
-                            Text(
-                              "Agendar",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Form(
-                              key: _formKey,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  Text(
-                                      selectedDate.toString().substring(0, 10)),
-                                  ElevatedButton(
-                                      onPressed: () => _selectDate(context),
-                                      child: Text("Selecciona Fecha")),
-                                  TextFormField(),
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: ElevatedButton(
-                                      child: Text("Submit"),
-                                      onPressed: () {
-                                        if (_formKey.currentState.validate()) {
-                                          _formKey.currentState.save();
-                                        }
-                                      },
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ); */
               },
               icon: Icon(Icons.calendar_today),
               label: Text("Agendar Visita"),
             ),
             SizedBox(height: 18),
             Text(
-              properties[widget.index]["title"],
+              widget.propertyInfo["title"],
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             Text(
-              properties[widget.index]["address"],
+              widget.propertyInfo["address"],
               style: TextStyle(fontSize: 17),
             ),
             SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lightbulb, color: Colors.black45),
-                Icon(Icons.local_drink, color: Colors.black45),
+                widget.propertyInfo["water"]
+                    ? Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: FaIcon(FontAwesomeIcons.faucet,
+                            color: Colors.black45),
+                      )
+                    : SizedBox.shrink(),
+                widget.propertyInfo["electricity"]
+                    ? Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: FaIcon(FontAwesomeIcons.bolt,
+                            color: Colors.black45),
+                      )
+                    : SizedBox.shrink(),
+                widget.propertyInfo["sewer"]
+                    ? Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: FaIcon(FontAwesomeIcons.toilet,
+                            color: Colors.black45),
+                      )
+                    : SizedBox.shrink(),
               ],
             ),
             SizedBox(height: 10),
@@ -250,15 +325,19 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Precio: " + properties[widget.index]["price"],
+                        "Precio: " +
+                            widget.propertyInfo["price"].toString() +
+                            " UF",
                         style: TextStyle(fontSize: 17),
                       ),
                       Text(
-                        "Superficie: " + properties[widget.index]["surface"],
+                        "Superficie: " +
+                            widget.propertyInfo["area"].toString() +
+                            " m2",
                         style: TextStyle(fontSize: 17),
                       ),
                       Text(
-                        "Contacto: " + properties[widget.index]["contact"],
+                        "Contacto: " + widget.propertyInfo["contact"],
                         style: TextStyle(fontSize: 17),
                       )
                     ],
@@ -270,125 +349,12 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: Text(
-                properties[widget.index]["description"],
+                widget.propertyInfo["description"],
                 style: TextStyle(fontSize: 17),
                 textAlign: TextAlign.justify,
               ),
             ),
             SizedBox(height: 50),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class MakeAppointment extends StatefulWidget {
-  MakeAppointment({Key key}) : super(key: key);
-
-  @override
-  _MakeAppointmentState createState() => _MakeAppointmentState();
-}
-
-class _MakeAppointmentState extends State<MakeAppointment> {
-  DateTime selectedDate = DateTime.now();
-  TimeOfDay selectedTime = TimeOfDay(hour: 08, minute: 00);
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime.now(),
-        lastDate: DateTime(2050));
-    if (picked != null && picked != selectedDate)
-      setState(() {
-        selectedDate = picked;
-      });
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay picked = await showTimePicker(
-      context: context,
-      initialTime: selectedTime,
-    );
-    if (picked != null)
-      setState(() {
-        selectedTime = picked;
-      });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Agendar'),
-      ),
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          //mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(height: 50),
-            Icon(Icons.calendar_today, size: 100, color: Colors.blue),
-            SizedBox(height: 50),
-            Container(
-              width: MediaQuery.of(context).size.width * 0.6,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blueAccent, width: 1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    selectedDate.toString().substring(0, 10),
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _selectDate(context),
-                    child: Text(
-                      "Selecciona Fecha",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Container(
-              width: MediaQuery.of(context).size.width * 0.6,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blueAccent, width: 1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    selectedTime.format(context),
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _selectTime(context),
-                    child: Text(
-                      "Selecciona Hora",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 5),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                child: Text("Confirmar"),
-                onPressed: () {
-                  print(selectedDate);
-                  print(selectedTime);
-                  // Join selectedDate y selectedTime and request to the backend
-                },
-              ),
-            ),
           ],
         ),
       ),
