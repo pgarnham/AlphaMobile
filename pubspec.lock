@@ -93,8 +93,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-<<<<<<< HEAD
-=======
   font_awesome_flutter:
     dependency: "direct main"
     description:
@@ -102,7 +100,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "9.0.0"
->>>>>>> sessions
   http:
     dependency: "direct main"
     description:
@@ -153,7 +150,6 @@ packages:
     source: hosted
     version: "1.8.0"
   path_provider_linux:
-<<<<<<< HEAD
     dependency: transitive
     description:
       name: path_provider_linux
@@ -245,8 +241,6 @@ packages:
     source: hosted
     version: "2.0.0"
   simple_gesture_detector:
-=======
->>>>>>> sessions
     dependency: transitive
     description:
       name: path_provider_linux
