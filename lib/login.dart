@@ -108,6 +108,13 @@ class _LoginPageState extends State<LoginPage> {
                               "userId", jsonDecode(response.body)['id']);
                           sharedPreferences.setString(
                               "apiKey", jsonDecode(response.body)['api_key']);
+                          sharedPreferences.setString(
+                              "userName",
+                              jsonDecode(response.body)['first_name'] +
+                                  " " +
+                                  jsonDecode(response.body)['last_name']);
+                          sharedPreferences.setString(
+                              "userEmail", jsonDecode(response.body)['email']);
 
                           Navigator.pushAndRemoveUntil(
                               context,
