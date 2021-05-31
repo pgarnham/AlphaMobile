@@ -39,7 +39,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     String userApiKey = sharedPreferences.getString("apiKey");
     int userId = sharedPreferences.getInt("userId");
     print(widget.propertyId.toString());
-    var uri = Uri.parse(apiUrl + getMessages + widget.propertyId.toString());
+    var uri = Uri.parse(apiUrl +
+        getMessages +
+        widget.propertyId.toString() +
+        "/" +
+        widget.ownerId.toString());
     print(uri);
     Map<String, String> myHeaders = Map<String, String>();
     myHeaders['Content-Type'] = 'application/json';
@@ -102,6 +106,16 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     setState(() {
       chatMessages = loadMessages();
     });
+  }
+
+  final myController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the
+    // widget tree.
+    myController.dispose();
+    super.dispose();
   }
 
   @override
@@ -246,9 +260,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           hintText: "Write message...",
                           hintStyle: TextStyle(color: Colors.black54),
                           border: InputBorder.none),
-                      onChanged: (value) {
-                        _newMessage = value;
-                      },
+                      controller: myController,
                     ),
                   ),
                   SizedBox(
@@ -257,7 +269,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   FloatingActionButton(
                     onPressed: () async {
                       setState(() async {
+                        _newMessage = myController.text;
                         await newMessage();
+                        myController.clear();
                       });
                     },
                     child: Icon(

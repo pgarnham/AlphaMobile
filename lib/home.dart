@@ -232,6 +232,16 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
     }
   }
 
+  final myController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the
+    // widget tree.
+    myController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -388,11 +398,7 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Preguntale algo al vendedor'),
-              onChanged: (value) {
-                setState(() {
-                  _message = value;
-                });
-              },
+              controller: myController,
               keyboardType: TextInputType.multiline,
               minLines: 1, //Normal textInputField will be displayed
               maxLines: 5, // when user presses enter it will adapt to it
@@ -401,7 +407,9 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               style: ElevatedButton.styleFrom(
                   textStyle: const TextStyle(fontSize: 20)),
               onPressed: () async {
+                _message = myController.text;
                 await newMessage();
+                myController.clear();
               },
               child: const Text('Enviar'),
             )
