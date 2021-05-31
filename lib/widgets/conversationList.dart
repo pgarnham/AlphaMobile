@@ -4,15 +4,19 @@ import 'package:alpha_mobile/screens/chatDetailPage.dart';
 
 class ConversationList extends StatefulWidget {
   final String name;
-  final String messageText;
+  final String ownerName;
+  final int ownerId;
   final String imageUrl;
   final String time;
   final bool isMessageRead;
+  final int propertyId;
   ConversationList(
       {@required this.name,
-      @required this.messageText,
+      @required this.ownerName,
+      @required this.ownerId,
       @required this.imageUrl,
       @required this.time,
+      @required this.propertyId,
       @required this.isMessageRead});
   @override
   _ConversationListState createState() => _ConversationListState();
@@ -26,7 +30,9 @@ class _ConversationListState extends State<ConversationList> {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
           return ChatDetailPage(
             propertyName: widget.name,
-            messages: chatMessages,
+            propertyId: widget.propertyId,
+            ownerName: widget.ownerName,
+            ownerId: widget.ownerId,
             imageUrl: widget
                 .imageUrl, // Esto se debería pedir al momento de abrir el chat
           );
@@ -60,7 +66,7 @@ class _ConversationListState extends State<ConversationList> {
                             height: 6,
                           ),
                           Text(
-                            widget.messageText,
+                            widget.ownerName,
                             style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey.shade600,
