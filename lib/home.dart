@@ -343,6 +343,14 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               ),
             ),
             SizedBox(height: 50),
+            TextField(
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Preguntale algo al vendedor'),
+              keyboardType: TextInputType.multiline,
+              minLines: 1, //Normal textInputField will be displayed
+              maxLines: 5, // when user presses enter it will adapt to it
+            ),
           ],
         ),
       ),
