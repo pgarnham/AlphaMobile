@@ -209,7 +209,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                                         snapshot.data[index]["sent_by"]
                                             ["last_name"],
                                     date: snapshot.data[index]["timestamp"]
-                                        .substring(0, 9));
+                                        .substring(0, 10));
                               },
                             ),
                             SizedBox(
