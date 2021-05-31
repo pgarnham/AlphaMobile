@@ -21,8 +21,12 @@ class _AccountPageState extends State<AccountPage> {
   void getData() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
-      userName = sharedPreferences.getString("userName");
-      userEmail = sharedPreferences.getString("userEmail");
+      if (sharedPreferences.getString("userName") != null) {
+        userName = sharedPreferences.getString("userName");
+      }
+      if (sharedPreferences.getString("userEmail") != null) {
+        userEmail = sharedPreferences.getString("userEmail");
+      }
     });
   }
 
