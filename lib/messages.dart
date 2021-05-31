@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:alpha_mobile/data.dart';
 import 'package:alpha_mobile/widgets/conversationList.dart';
+import 'package:http/http.dart' as http;
+import 'package:alpha_mobile/variables.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class MessagesPage extends StatefulWidget {
   @override
@@ -8,14 +11,51 @@ class MessagesPage extends StatefulWidget {
 }
 
 class _MessagesPageState extends State<MessagesPage> {
-  List<Map> chatUsers = propertiesChats;
+  Future<List> chatUsers;
+
+  @override
+  void initState() {
+    super.initState();
+    chatUsers = loadChats();
+  }
+
+  Future<List> loadChats() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String userApiKey = sharedPreferences.getString("apiKey");
+    var uri = Uri.parse(apiUrl + getChats);
+    Map<String, String> myHeaders = Map<String, String>();
+    myHeaders['Content-Type'] = 'application/json';
+    myHeaders['Authorization'] = "Bearer " + userApiKey;
+    final response = await http.get(uri, headers: myHeaders);
+
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      return jsonDecode(response.body);
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load Chats');
+    }
+  }
+
+  Future<void> reloadChats() async {
+    setState(() {
+      chatUsers = loadChats();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Mensajes'),
-      ),
+      appBar: AppBar(title: Text('Mensajes'), actions: [
+        GestureDetector(
+          onTap: reloadChats,
+          child: Icon(
+            Icons.refresh,
+            size: 30.0,
+            color: Colors.white,
+          ),
+        )
+      ]),
       body: SingleChildScrollView(
         physics: BouncingScrollPhysics(),
         child: Column(
@@ -82,21 +122,43 @@ class _MessagesPageState extends State<MessagesPage> {
                 ),
               ),
             ),
-            ListView.builder(
-              itemCount: chatUsers.length,
-              shrinkWrap: true,
-              padding: EdgeInsets.only(top: 16),
-              physics: NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                return ConversationList(
-                  name: chatUsers[index]["propertyName"],
-                  messageText: chatUsers[index]["lastMessage"],
-                  imageUrl: chatUsers[index]["imageURL"],
-                  time: chatUsers[index]["lastTime"],
-                  isMessageRead: (index == 0 || index == 3) ? true : false,
-                );
-              },
-            ),
+            FutureBuilder(
+                future: chatUsers,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        itemCount: snapshot.data.length,
+                        shrinkWrap: true,
+                        padding: EdgeInsets.only(top: 16),
+                        physics: NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return ConversationList(
+                            name: snapshot.data[index]["property"]["title"],
+                            ownerName: snapshot.data[index]["property"]["user"]
+                                    ["first_name"] +
+                                " " +
+                                snapshot.data[index]["property"]["user"]
+                                    ["last_name"],
+                            ownerId: snapshot.data[index]["property"]["user"]
+                                ["id"],
+                            imageUrl: "",
+                            time: "",
+                            propertyId: snapshot.data[index]["property"]["id"],
+                            isMessageRead:
+                                (index == 0 || index == 3) ? true : false,
+                          );
+                        },
+                      );
+                    } else {
+                      return Center(child: Text("No hay propiedades"));
+                    }
+                  } else {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                }),
           ],
         ),
       ),

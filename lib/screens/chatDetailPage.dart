@@ -1,19 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:alpha_mobile/widgets/chatBubble.dart';
+import 'package:http/http.dart' as http;
+import 'package:alpha_mobile/variables.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class ChatDetailPage extends StatefulWidget {
   String propertyName;
   List<Map> messages;
   String imageUrl;
+  int propertyId;
+  String ownerName;
+  int ownerId;
   ChatDetailPage(
       {@required this.propertyName,
-      @required this.messages,
+      @required this.propertyId,
+      @required this.ownerName,
+      @required this.ownerId,
       @required this.imageUrl});
   @override
   _ChatDetailPageState createState() => _ChatDetailPageState();
 }
 
 class _ChatDetailPageState extends State<ChatDetailPage> {
+  Future<List> chatMessages;
+  List<bool> isAuthorList = new List<bool>.empty(growable: true);
+  List<Map> newMessagesList = new List<Map>.empty(growable: true);
+  String _newMessage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    chatMessages = loadMessages();
+  }
+
+  Future<List> loadMessages() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String userApiKey = sharedPreferences.getString("apiKey");
+    int userId = sharedPreferences.getInt("userId");
+    print(widget.propertyId.toString());
+    var uri = Uri.parse(apiUrl +
+        getMessages +
+        widget.propertyId.toString() +
+        "/" +
+        widget.ownerId.toString());
+    print(uri);
+    Map<String, String> myHeaders = Map<String, String>();
+    myHeaders['Content-Type'] = 'application/json';
+    myHeaders['Authorization'] = "Bearer " + userApiKey;
+    final response = await http.get(uri, headers: myHeaders);
+
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      List<dynamic> values = new List<dynamic>.empty(growable: true);
+      values = jsonDecode(response.body);
+      if (values.length > 0) {
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] != null) {
+            int senderId = values[i]["sent_by"]["id"];
+            if (senderId == userId) {
+              isAuthorList.add(true);
+            } else {
+              isAuthorList.add(false);
+            }
+          }
+        }
+      }
+      return jsonDecode(response.body);
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load Chats');
+    }
+  }
+
+  newMessage() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String userApiKey = sharedPreferences.getString("apiKey");
+    int userId = sharedPreferences.getInt("userId");
+    var uri = Uri.parse(apiUrl + sendMessage);
+    Map<String, String> myHeaders = Map<String, String>();
+    myHeaders['Content-Type'] = 'application/json';
+    myHeaders['Authorization'] = "Bearer " + userApiKey;
+    var myBody = {
+      "sent_by_id": userId,
+      "sent_to_id": widget.ownerId,
+      "content": _newMessage,
+      "message_type": "",
+      "property_id": widget.propertyId,
+      "status": "OK"
+    };
+    final response =
+        await http.post(uri, body: jsonEncode(myBody), headers: myHeaders);
+
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      newMessagesList.add(jsonDecode(response.body));
+      await reloadMessages();
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load Chats');
+    }
+  }
+
+  Future<void> reloadMessages() async {
+    setState(() {
+      chatMessages = loadMessages();
+    });
+  }
+
+  final myController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the
+    // widget tree.
+    myController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,16 +163,20 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                         height: 6,
                       ),
                       Text(
-                        "Disponible",
+                        widget.ownerName,
                         style: TextStyle(
                             color: Colors.grey.shade600, fontSize: 13),
                       ),
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.settings,
-                  color: Colors.black54,
+                GestureDetector(
+                  onTap: reloadMessages,
+                  child: Icon(
+                    Icons.refresh,
+                    size: 30.0,
+                    color: Colors.blue[200],
+                  ),
                 ),
               ],
             ),
@@ -77,19 +185,47 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       ),
       body: Stack(
         children: <Widget>[
-          ListView.builder(
-            itemCount: widget.messages.length,
-            shrinkWrap: true,
-            padding: EdgeInsets.only(top: 10, bottom: 10),
-            physics: NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              return ChatBubble(
-                  message: widget.messages[index]["messageContent"],
-                  isAuthor: widget.messages[index]["messageType"] == "receiver",
-                  name: widget.messages[index]["author"],
-                  date: widget.messages[index]["timeStamp"]);
-            },
-          ),
+          FutureBuilder<List>(
+              future: chatMessages,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasData) {
+                    return SingleChildScrollView(
+                        physics: BouncingScrollPhysics(),
+                        child: Column(
+                          children: [
+                            ListView.builder(
+                              itemCount: snapshot.data.length,
+                              shrinkWrap: true,
+                              padding: EdgeInsets.only(top: 10, bottom: 10),
+                              physics: NeverScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                return ChatBubble(
+                                    message: snapshot.data[index]["content"],
+                                    isAuthor: isAuthorList[index],
+                                    name: snapshot.data[index]["sent_by"]
+                                            ["first_name"] +
+                                        " " +
+                                        snapshot.data[index]["sent_by"]
+                                            ["last_name"],
+                                    date: snapshot.data[index]["timestamp"]
+                                        .substring(0, 10));
+                              },
+                            ),
+                            SizedBox(
+                              height: 160,
+                            )
+                          ],
+                        ));
+                  } else {
+                    return Center(child: Text("No hay propiedades"));
+                  }
+                } else {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+              }),
           Align(
             alignment: Alignment.bottomLeft,
             child: Container(
@@ -124,13 +260,20 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                           hintText: "Write message...",
                           hintStyle: TextStyle(color: Colors.black54),
                           border: InputBorder.none),
+                      controller: myController,
                     ),
                   ),
                   SizedBox(
                     width: 15,
                   ),
                   FloatingActionButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      setState(() async {
+                        _newMessage = myController.text;
+                        await newMessage();
+                        myController.clear();
+                      });
+                    },
                     child: Icon(
                       Icons.send,
                       color: Colors.white,

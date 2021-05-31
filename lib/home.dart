@@ -203,6 +203,45 @@ class PropertiesDetail extends StatefulWidget {
 }
 
 class _PropertiesDetailState extends State<PropertiesDetail> {
+  String _message;
+
+  newMessage() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String userApiKey = sharedPreferences.getString("apiKey");
+    int userId = sharedPreferences.getInt("userId");
+    var uri = Uri.parse(apiUrl + sendMessage);
+    Map<String, String> myHeaders = Map<String, String>();
+    myHeaders['Content-Type'] = 'application/json';
+    myHeaders['Authorization'] = "Bearer " + userApiKey;
+    var myBody = {
+      "sent_by_id": userId,
+      "sent_to_id": widget.propertyInfo["user"]["id"],
+      "content": _message,
+      "message_type": "",
+      "property_id": widget.propertyId,
+      "status": "OK"
+    };
+    final response =
+        await http.post(uri, body: jsonEncode(myBody), headers: myHeaders);
+
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load Chats');
+    }
+  }
+
+  final myController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the
+    // widget tree.
+    myController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -355,6 +394,25 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               ),
             ),
             SizedBox(height: 50),
+            TextField(
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Preguntale algo al vendedor'),
+              controller: myController,
+              keyboardType: TextInputType.multiline,
+              minLines: 1, //Normal textInputField will be displayed
+              maxLines: 5, // when user presses enter it will adapt to it
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  textStyle: const TextStyle(fontSize: 20)),
+              onPressed: () async {
+                _message = myController.text;
+                await newMessage();
+                myController.clear();
+              },
+              child: const Text('Enviar'),
+            )
           ],
         ),
       ),
