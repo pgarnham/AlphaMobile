@@ -132,7 +132,7 @@ class _MessagesPageState extends State<MessagesPage> {
                                 ["id"],
                             imageUrl: "",
                             time: "",
-                            propertyId: snapshot.data[index]["propertyId"],
+                            propertyId: snapshot.data[index]["property"]["id"],
                             isMessageRead:
                                 (index == 0 || index == 3) ? true : false,
                           );

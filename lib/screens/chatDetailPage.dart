@@ -38,7 +38,9 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String userApiKey = sharedPreferences.getString("apiKey");
     int userId = sharedPreferences.getInt("userId");
-    var uri = Uri.http(apiUrl, getMessages);
+    print(widget.propertyId.toString());
+    var uri = Uri.parse(apiUrl + getMessages + widget.propertyId.toString());
+    print(uri);
     Map<String, String> myHeaders = Map<String, String>();
     myHeaders['Content-Type'] = 'application/json';
     myHeaders['Authorization'] = "Bearer " + userApiKey;
@@ -48,12 +50,15 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       // If the call to the server was successful, parse the JSON
       List<dynamic> values = new List<dynamic>.empty(growable: true);
       values = jsonDecode(response.body);
-      newMessagesList = values;
       if (values.length > 0) {
         for (int i = 0; i < values.length; i++) {
           if (values[i] != null) {
             int senderId = values[i]["sent_by"]["id"];
-            isAuthorList.add(senderId == userId);
+            if (senderId == userId) {
+              isAuthorList.add(true);
+            } else {
+              isAuthorList.add(false);
+            }
           }
         }
       }
@@ -68,7 +73,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String userApiKey = sharedPreferences.getString("apiKey");
     int userId = sharedPreferences.getInt("userId");
-    var uri = Uri.http(apiUrl, sendMessage);
+    var uri = Uri.parse(apiUrl + sendMessage);
     Map<String, String> myHeaders = Map<String, String>();
     myHeaders['Content-Type'] = 'application/json';
     myHeaders['Authorization'] = "Bearer " + userApiKey;
@@ -80,7 +85,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       "property_id": widget.propertyId,
       "status": "OK"
     };
-    final response = await http.post(uri, body: myBody, headers: myHeaders);
+    final response =
+        await http.post(uri, body: jsonEncode(myBody), headers: myHeaders);
 
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
@@ -167,12 +173,13 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       itemBuilder: (context, index) {
                         return ChatBubble(
                             message: snapshot.data[index]["content"],
-                            isAuthor: snapshot.data[index],
+                            isAuthor: isAuthorList[index],
                             name: snapshot.data[index]["sent_by"]
                                     ["first_name"] +
                                 " " +
                                 snapshot.data[index]["sent_by"]["last_name"],
-                            date: snapshot.data[index]["timestamp"]);
+                            date: snapshot.data[index]["timestamp"]
+                                .substring(1, 9));
                       },
                     );
                   } else {
