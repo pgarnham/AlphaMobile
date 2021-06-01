@@ -91,8 +91,8 @@ class _PropertiesPageState extends State<PropertiesPage> {
                                   child: Container(
                                     height: 300,
                                     width: MediaQuery.of(context).size.width,
-                                    child: Image.asset(
-                                      'assets/parcela01.jpg',
+                                    child: Image.network(
+                                      'https://www.costacuraco.cl/wp-content/uploads/2020/06/costa-curaco-ventas-de-terrenos-en-chiloe-home-background-instagram-feed.jpg',
                                       fit: BoxFit.cover,
                                     ),
                                   ),
