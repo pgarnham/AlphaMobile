@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:alpha_mobile/appointment.dart';
+import 'package:alpha_mobile/data.dart';
 import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -15,6 +16,8 @@ class PropertiesPage extends StatefulWidget {
 
 class _PropertiesPageState extends State<PropertiesPage> {
   Future<List> apiProperties;
+  String _region;
+  String _comuna;
 
   @override
   void initState() {
@@ -63,132 +66,260 @@ class _PropertiesPageState extends State<PropertiesPage> {
         ),
         body: RefreshIndicator(
           onRefresh: reloadData,
-          child: FutureBuilder<List>(
-            future: apiProperties,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (BuildContext ctx, int index) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PropertiesDetail(
-                                    snapshot.data[index]["id"],
-                                    snapshot.data[index])),
-                          );
-                        },
-                        child: Container(
-                          height: 480,
-                          child: Card(
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8),
-                                  child: Container(
-                                    height: 300,
-                                    width: MediaQuery.of(context).size.width,
-                                    child: Image.network(
-                                      'https://www.costacuraco.cl/wp-content/uploads/2020/06/costa-curaco-ventas-de-terrenos-en-chiloe-home-background-instagram-feed.jpg',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            child: FutureBuilder<List>(
+              future: apiProperties,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasData) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: 195,
+                          child: Column(
+                            children: [
+                              SizedBox(height: 5),
+                              Text("Región",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              SizedBox(height: 2),
+                              Container(
+                                width: MediaQuery.of(context).size.width - 5,
+                                padding: EdgeInsets.symmetric(horizontal: 5.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5.0)),
                                 ),
-                                Text(
-                                  snapshot.data[index]["title"],
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20),
-                                ),
-                                Text(
-                                  snapshot.data[index]["address"],
-                                  style: TextStyle(fontSize: 17),
-                                ),
-                                SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    snapshot.data[index]["water"]
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8.0),
-                                            child: FaIcon(
-                                                FontAwesomeIcons.faucet,
-                                                color: Colors.black45),
-                                          )
-                                        : SizedBox.shrink(),
-                                    snapshot.data[index]["electricity"]
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8.0),
-                                            child: FaIcon(FontAwesomeIcons.bolt,
-                                                color: Colors.black45),
-                                          )
-                                        : SizedBox.shrink(),
-                                    snapshot.data[index]["sewer"]
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8.0),
-                                            child: FaIcon(
-                                                FontAwesomeIcons.toilet,
-                                                color: Colors.black45),
-                                          )
-                                        : SizedBox.shrink(),
-                                  ],
-                                ),
-                                SizedBox(height: 10),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Row(
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Precio: " +
-                                                snapshot.data[index]["price"]
-                                                    .toString() +
-                                                " UF",
-                                            style: TextStyle(fontSize: 17),
-                                          ),
-                                          Text(
-                                            "Superficie: " +
-                                                snapshot.data[index]["area"]
-                                                    .toString() +
-                                                " m2",
-                                            style: TextStyle(fontSize: 17),
-                                          ),
-                                          Text(
-                                            "Contacto: " +
-                                                snapshot.data[index]["contact"],
-                                            style: TextStyle(fontSize: 17),
-                                          )
-                                        ],
+                                child: DropdownButton<String>(
+                                  value: _region,
+                                  style: TextStyle(color: Colors.blue),
+                                  iconEnabledColor: Colors.black,
+                                  isExpanded: true,
+                                  items: regiones.map<DropdownMenuItem<String>>(
+                                      (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(
+                                        value,
+                                        style: TextStyle(color: Colors.black),
                                       ),
-                                    ],
+                                    );
+                                  }).toList(),
+                                  hint: Text(
+                                    "Seleccione una Región",
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
                                   ),
-                                )
-                              ],
-                            ),
+                                  onChanged: (String value) {
+                                    setState(() {
+                                      _region = value;
+                                      _comuna = null;
+                                    });
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text("Comuna",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                              SizedBox(height: 2),
+                              Container(
+                                width: MediaQuery.of(context).size.width - 5,
+                                padding: EdgeInsets.symmetric(horizontal: 5.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.blueAccent),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5.0)),
+                                ),
+                                child: DropdownButton<String>(
+                                  focusColor: Colors.white,
+                                  value: _comuna,
+                                  style: TextStyle(color: Colors.white),
+                                  iconEnabledColor: Colors.black,
+                                  isExpanded: true,
+                                  items: _region != null
+                                      ? comunas[_region]
+                                          .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(
+                                              value,
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                            ),
+                                          );
+                                        }).toList()
+                                      : [],
+                                  hint: Text(
+                                    "Seleccione una Comuna",
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  onChanged: (String value) {
+                                    setState(() {
+                                      _comuna = value;
+                                    });
+                                  },
+                                ),
+                              ),
+                              ElevatedButton(
+                                  onPressed: () {
+                                    if (_region != null && _comuna != null) {
+                                      print(_region);
+                                      print(_comuna);
+                                    }
+                                  },
+                                  child: Text("Buscar"))
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  );
+                        Divider(
+                          color: Colors.blueAccent,
+                        ),
+                        ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (BuildContext ctx, int index) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => PropertiesDetail(
+                                          snapshot.data[index]["id"],
+                                          snapshot.data[index])),
+                                );
+                              },
+                              child: Container(
+                                height: 480,
+                                child: Card(
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 8),
+                                        child: Container(
+                                          height: 300,
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          child: Image.network(
+                                            'https://www.costacuraco.cl/wp-content/uploads/2020/06/costa-curaco-ventas-de-terrenos-en-chiloe-home-background-instagram-feed.jpg',
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        snapshot.data[index]["title"],
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20),
+                                      ),
+                                      Text(
+                                        snapshot.data[index]["address"],
+                                        style: TextStyle(fontSize: 17),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          snapshot.data[index]["water"]
+                                              ? Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 8.0),
+                                                  child: FaIcon(
+                                                      FontAwesomeIcons.faucet,
+                                                      color: Colors.black45),
+                                                )
+                                              : SizedBox.shrink(),
+                                          snapshot.data[index]["electricity"]
+                                              ? Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 8.0),
+                                                  child: FaIcon(
+                                                      FontAwesomeIcons.bolt,
+                                                      color: Colors.black45),
+                                                )
+                                              : SizedBox.shrink(),
+                                          snapshot.data[index]["sewer"]
+                                              ? Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 8.0),
+                                                  child: FaIcon(
+                                                      FontAwesomeIcons.toilet,
+                                                      color: Colors.black45),
+                                                )
+                                              : SizedBox.shrink(),
+                                        ],
+                                      ),
+                                      SizedBox(height: 10),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8.0),
+                                        child: Row(
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Precio: " +
+                                                      snapshot.data[index]
+                                                              ["price"]
+                                                          .toString() +
+                                                      " UF",
+                                                  style:
+                                                      TextStyle(fontSize: 17),
+                                                ),
+                                                Text(
+                                                  "Superficie: " +
+                                                      snapshot.data[index]
+                                                              ["area"]
+                                                          .toString() +
+                                                      " m2",
+                                                  style:
+                                                      TextStyle(fontSize: 17),
+                                                ),
+                                                Text(
+                                                  "Contacto: " +
+                                                      snapshot.data[index]
+                                                          ["contact"],
+                                                  style:
+                                                      TextStyle(fontSize: 17),
+                                                )
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Center(child: Text("No hay propiedades"));
+                  }
                 } else {
-                  return Center(child: Text("No hay propiedades"));
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
                 }
-              } else {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-            },
+              },
+            ),
           ),
         ));
   }
