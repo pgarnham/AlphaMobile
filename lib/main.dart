@@ -1,4 +1,4 @@
-import 'package:alpha_mobile/navbar.dart';
+import 'package:alpha_mobile/launch.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,7 +14,10 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,
-      home: NavBar(),
+      builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child),
+      home: LaunchPage(),
     );
   }
 }
