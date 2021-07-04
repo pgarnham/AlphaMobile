@@ -38,5 +38,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+            <!-- "AR Required" apps must declare minSdkVersion ≥ 24 -->
+
+
+<!-- Indicates that app requires ARCore ("AR Required"). Ensures app is only
+     visible in the Google Play Store on devices that support ARCore.
+-->
+
+
+
     </application>
 </manifest>

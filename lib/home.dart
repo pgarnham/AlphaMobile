@@ -8,6 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:alpha_mobile/messages.dart';
+import 'package:alpha_mobile/screens/camera.dart';
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -396,7 +397,18 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 textAlign: TextAlign.justify,
               ),
             ),
-            SizedBox(height: 50),
+            SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CameraScreen()),
+                );
+              },
+              icon: Icon(Icons.explore),
+              label: Text("Como Llegar"),
+            ),
+            SizedBox(height: 30),
             TextField(
               decoration: InputDecoration(
                   border: OutlineInputBorder(),
