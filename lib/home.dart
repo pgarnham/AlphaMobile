@@ -18,44 +18,84 @@ class _PropertiesPageState extends State<PropertiesPage> {
   Future<List> apiProperties;
   String _region;
   String _comuna;
+  int _comunaId;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    apiProperties = getData();
   }
 
   Future<List> getData() async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
       SharedPreferences sharedPreferences =
           await SharedPreferences.getInstance();
 
       var userApiKey = sharedPreferences.getString("apiKey");
 
-      final response = await http.get(
-        Uri.parse(apiUrl + getPropertiesPath),
+      final comunesResponse = await http.get(
+        Uri.parse(apiUrl + getComunes),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer " + userApiKey
         },
       );
 
-      //print(response.statusCode);
-      //print(jsonDecode(response.body));
+      await Future.forEach(jsonDecode(comunesResponse.body),
+          (responseComuna) async {
+        if (responseComuna["name"] == _comuna) {
+          setState(() {
+            _comunaId = responseComuna["id"];
+          });
+        }
+      });
+
+      if (_comunaId == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return [];
+      }
+
+      final response = await http.get(
+        Uri.parse(apiUrl + getPropertiesComune + _comunaId.toString()),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + userApiKey
+        },
+      );
+      setState(() {
+        _isLoading = false;
+      });
       return jsonDecode(response.body);
     } catch (e) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Intenta nuevamente')));
+      setState(() {
+        _isLoading = false;
+      });
       print(e);
     }
+    setState(() {
+      _isLoading = false;
+    });
     return [];
   }
 
-  Future<void> reloadData() async {
+  void searchProperties() {
     setState(() {
       apiProperties = getData();
     });
+  }
+
+  Future<void> reloadData() async {
+    if (_comuna != null && _region != null) {
+      setState(() {
+        apiProperties = getData();
+      });
+    }
   }
 
   @override
@@ -68,123 +108,119 @@ class _PropertiesPageState extends State<PropertiesPage> {
           onRefresh: reloadData,
           child: SingleChildScrollView(
             physics: AlwaysScrollableScrollPhysics(),
-            child: FutureBuilder<List>(
-              future: apiProperties,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasData) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 195,
-                          child: Column(
-                            children: [
-                              SizedBox(height: 5),
-                              Text("Región",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                              SizedBox(height: 2),
-                              Container(
-                                width: MediaQuery.of(context).size.width - 5,
-                                padding: EdgeInsets.symmetric(horizontal: 5.0),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.blueAccent),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5.0)),
-                                ),
-                                child: DropdownButton<String>(
-                                  value: _region,
-                                  style: TextStyle(color: Colors.blue),
-                                  iconEnabledColor: Colors.black,
-                                  isExpanded: true,
-                                  items: regiones.map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(
-                                        value,
-                                        style: TextStyle(color: Colors.black),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  hint: Text(
-                                    "Seleccione una Región",
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                  onChanged: (String value) {
-                                    setState(() {
-                                      _region = value;
-                                      _comuna = null;
-                                    });
-                                  },
-                                ),
+            child: Column(
+              children: [
+                Container(
+                  height: 195,
+                  child: Column(
+                    children: [
+                      SizedBox(height: 5),
+                      Text("Región",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 2),
+                      Container(
+                        width: MediaQuery.of(context).size.width - 5,
+                        padding: EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent),
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        ),
+                        child: DropdownButton<String>(
+                          value: _region,
+                          style: TextStyle(color: Colors.blue),
+                          iconEnabledColor: Colors.black,
+                          isExpanded: true,
+                          items: regiones
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: TextStyle(color: Colors.black),
                               ),
-                              SizedBox(height: 5),
-                              Text("Comuna",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                              SizedBox(height: 2),
-                              Container(
-                                width: MediaQuery.of(context).size.width - 5,
-                                padding: EdgeInsets.symmetric(horizontal: 5.0),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.blueAccent),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5.0)),
-                                ),
-                                child: DropdownButton<String>(
-                                  focusColor: Colors.white,
-                                  value: _comuna,
-                                  style: TextStyle(color: Colors.white),
-                                  iconEnabledColor: Colors.black,
-                                  isExpanded: true,
-                                  items: _region != null
-                                      ? comunas[_region]
-                                          .map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                          return DropdownMenuItem<String>(
-                                            value: value,
-                                            child: Text(
-                                              value,
-                                              style: TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                          );
-                                        }).toList()
-                                      : [],
-                                  hint: Text(
-                                    "Seleccione una Comuna",
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                  onChanged: (String value) {
-                                    setState(() {
-                                      _comuna = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                              ElevatedButton(
-                                  onPressed: () {
-                                    if (_region != null && _comuna != null) {
-                                      print(_region);
-                                      print(_comuna);
-                                    }
-                                  },
-                                  child: Text("Buscar"))
-                            ],
+                            );
+                          }).toList(),
+                          hint: Text(
+                            "Seleccione una Región",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500),
                           ),
+                          onChanged: (String value) {
+                            setState(() {
+                              _region = value;
+                              _comuna = null;
+                            });
+                          },
                         ),
-                        Divider(
-                          color: Colors.blueAccent,
+                      ),
+                      SizedBox(height: 5),
+                      Text("Comuna",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 2),
+                      Container(
+                        width: MediaQuery.of(context).size.width - 5,
+                        padding: EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent),
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
                         ),
-                        ListView.builder(
+                        child: DropdownButton<String>(
+                          focusColor: Colors.white,
+                          value: _comuna,
+                          style: TextStyle(color: Colors.white),
+                          iconEnabledColor: Colors.black,
+                          isExpanded: true,
+                          items: _region != null
+                              ? comunas[_region].map<DropdownMenuItem<String>>(
+                                  (String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                  );
+                                }).toList()
+                              : [],
+                          hint: Text(
+                            "Seleccione una Comuna",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          onChanged: (String value) {
+                            setState(() {
+                              _comuna = value;
+                            });
+                          },
+                        ),
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            if (_isLoading == false) {
+                              if (_region != null && _comuna != null) {
+                                searchProperties();
+                              }
+                            }
+                          },
+                          child:
+                              _isLoading ? Text("Buscando...") : Text("Buscar"))
+                    ],
+                  ),
+                ),
+                Divider(
+                  color: Colors.blueAccent,
+                ),
+                FutureBuilder<List>(
+                  future: apiProperties,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      print(snapshot.data);
+                      if (snapshot.data.isNotEmpty) {
+                        return ListView.builder(
                           physics: NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           itemCount: snapshot.data.length,
@@ -307,18 +343,27 @@ class _PropertiesPageState extends State<PropertiesPage> {
                               ),
                             );
                           },
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Center(child: Text("No hay propiedades"));
-                  }
-                } else {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },
+                        );
+                      } else if (snapshot.data.isEmpty) {
+                        return Center(
+                            child: Text("No hay propiedades en esa comuna"));
+                      } else {
+                        return Container();
+                      }
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.none) {
+                      return Center(child: Text("Seleccione Región y Comuna"));
+                    } else {
+                      return Container();
+                    }
+                  },
+                ),
+              ],
             ),
           ),
         ));
