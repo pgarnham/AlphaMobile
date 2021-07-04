@@ -1,8 +1,6 @@
-import 'package:alpha_mobile/screens/preview.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:path_provider/path_provider.dart';
 
 class CameraScreen extends StatefulWidget {
   @override
@@ -44,8 +42,6 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  /// Display camera preview
-
   Widget cameraPreview() {
     if (cameraController == null || !cameraController.value.isInitialized) {
       return Text(
@@ -65,84 +61,8 @@ class _CameraScreenState extends State<CameraScreen> {
         )));
   }
 
-  Widget cameraControl(context) {
-    return Expanded(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            FloatingActionButton(
-              child: Icon(
-                Icons.camera,
-                color: Colors.black,
-              ),
-              backgroundColor: Colors.white,
-              onPressed: () {
-                onCapture(context);
-              },
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget cameraToggle() {
-    if (cameras == null || cameras.isEmpty) {
-      return Spacer();
-    }
-
-    CameraDescription selectedCamera = cameras[selectedCameraIndex];
-    CameraLensDirection lensDirection = selectedCamera.lensDirection;
-
-    return Expanded(
-      child: Align(
-        alignment: Alignment.center,
-        child: TextButton.icon(
-            onPressed: () {
-              onSwitchCamera();
-            },
-            icon: Icon(
-              getCameraLensIcons(lensDirection),
-              color: Colors.white,
-              size: 24,
-            ),
-            label: Text(
-              '${lensDirection.toString().substring(lensDirection.toString().indexOf('.') + 1).toUpperCase()}',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-            )),
-      ),
-    );
-  }
-
-  onCapture(context) async {
-    try {
-      final p = await getTemporaryDirectory();
-      final name = DateTime.now();
-      final path = "${p.path}/$name.png";
-
-      await cameraController.takePicture().then((value) {
-        print('here');
-        print(path);
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => PreviewScreen(
-                      imgPath: path,
-                      fileName: "$name.png",
-                    )));
-      });
-    } catch (e) {
-      showCameraException(e);
-    }
-  }
-
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     availableCameras().then((value) {
       cameras = value;
@@ -166,31 +86,44 @@ class _CameraScreenState extends State<CameraScreen> {
       body: Container(
         child: Stack(
           children: <Widget>[
-//            Expanded(
-//              flex: 1,
-//              child: _cameraPreviewWidget(),
-//            ),
+            CameraPreview(cameraController),
             Align(
               alignment: Alignment.topCenter,
-              child: cameraPreview(),
+              child: Icon(
+                Icons.arrow_drop_up,
+                size: 100,
+              ),
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: 120,
-                width: double.infinity,
-                padding: EdgeInsets.all(15),
-                color: Colors.transparent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    cameraToggle(),
-                    cameraControl(context),
-                    Spacer(),
-                  ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Icon(
+                  Icons.arrow_drop_down,
+                  size: 100,
                 ),
               ),
-            )
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Icon(
+                  Icons.arrow_left,
+                  size: 100,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.arrow_right,
+                  size: 100,
+                ),
+              ),
+            ),
           ],
         ),
       ),
