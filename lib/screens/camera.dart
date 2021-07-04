@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:location/location.dart';
+import 'package:maps_toolkit/maps_toolkit.dart';
 
 class CameraScreen extends StatefulWidget {
   @override
@@ -12,6 +14,42 @@ class _CameraScreenState extends State<CameraScreen> {
   List cameras;
   int selectedCameraIndex;
   String imgPath;
+  bool _isInside = false;
+  bool _isLoading = true;
+
+  String leftArrowDistance = "0";
+  String rightArrowDistance = "0";
+  String upArrowDistance = "0";
+  String downArrowDistance = "0";
+
+  Location location = new Location();
+
+  LatLng point01 = LatLng();
+  LatLng point02 = LatLng();
+  LatLng point03 = LatLng();
+  LatLng point04 = LatLng();
+
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  void checkPermissions() async {
+    _serviceEnabled = await location.serviceEnabled();
+
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+  }
 
   Future initCamera(CameraDescription cameraDescription) async {
     if (cameraController != null) {
@@ -50,20 +88,57 @@ class _CameraScreenState extends State<CameraScreen> {
             color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
       );
     }
-    final size = MediaQuery.of(context).size;
-    final deviceRatio = size.width / size.height;
-    return Transform.scale(
-        scale: cameraController.value.aspectRatio / deviceRatio,
-        child: Center(
-            child: AspectRatio(
-          aspectRatio: cameraController.value.aspectRatio,
-          child: CameraPreview(cameraController),
-        )));
+
+    return CameraPreview(cameraController);
   }
 
   @override
   void initState() {
     super.initState();
+
+    location.onLocationChanged.listen((LocationData currentLocation) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          upArrowDistance = PolygonUtil.distanceToLine(
+                  LatLng(currentLocation.latitude, currentLocation.longitude),
+                  point01,
+                  point02)
+              .toStringAsFixed(2);
+
+          rightArrowDistance = PolygonUtil.distanceToLine(
+                  LatLng(currentLocation.latitude, currentLocation.longitude),
+                  point02,
+                  point03)
+              .toStringAsFixed(2);
+
+          downArrowDistance = PolygonUtil.distanceToLine(
+                  LatLng(currentLocation.latitude, currentLocation.longitude),
+                  point03,
+                  point04)
+              .toStringAsFixed(2);
+
+          leftArrowDistance = PolygonUtil.distanceToLine(
+                  LatLng(currentLocation.latitude, currentLocation.longitude),
+                  point04,
+                  point01)
+              .toStringAsFixed(2);
+
+          _isInside = PolygonUtil.containsLocation(
+              LatLng(currentLocation.latitude, currentLocation.longitude),
+              [
+                point01,
+                point02,
+                point03,
+                point04,
+              ],
+              true);
+          print(_isInside);
+        });
+      }
+    });
+
+    checkPermissions();
     availableCameras().then((value) {
       cameras = value;
       if (cameras.length > 0) {
@@ -86,21 +161,62 @@ class _CameraScreenState extends State<CameraScreen> {
       body: Container(
         child: Stack(
           children: <Widget>[
-            CameraPreview(cameraController),
+            cameraPreview(),
+            Align(
+              alignment: Alignment.center,
+              child: _isLoading
+                  ? Text("Determinando ubicación")
+                  : (_isInside
+                      ? Text(
+                          "Estas dentro del terreno",
+                          style: TextStyle(
+                              color: Colors.greenAccent, fontSize: 16),
+                        )
+                      : Text(
+                          "No estas dentro del terreno",
+                          style:
+                              TextStyle(color: Colors.redAccent, fontSize: 16),
+                        )),
+            ),
             Align(
               alignment: Alignment.topCenter,
-              child: Icon(
-                Icons.arrow_drop_up,
-                size: 100,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.arrow_drop_up,
+                    size: 100,
+                    color: _isInside ? Colors.greenAccent : Colors.redAccent,
+                  ),
+                  Text(
+                    upArrowDistance + " mts",
+                    style: TextStyle(
+                        color:
+                            _isInside ? Colors.greenAccent : Colors.redAccent,
+                        fontSize: 16),
+                  ),
+                ],
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: Align(
                 alignment: Alignment.bottomCenter,
-                child: Icon(
-                  Icons.arrow_drop_down,
-                  size: 100,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(downArrowDistance + " mts",
+                        style: TextStyle(
+                            color: _isInside
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
+                            fontSize: 16)),
+                    Icon(
+                      Icons.arrow_drop_down,
+                      size: 100,
+                      color: _isInside ? Colors.greenAccent : Colors.redAccent,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -108,9 +224,22 @@ class _CameraScreenState extends State<CameraScreen> {
               padding: const EdgeInsets.only(bottom: 20.0),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Icon(
-                  Icons.arrow_left,
-                  size: 100,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.arrow_left,
+                      size: 100,
+                      color: _isInside ? Colors.greenAccent : Colors.redAccent,
+                    ),
+                    Text(
+                      leftArrowDistance + " mts",
+                      style: TextStyle(
+                          color:
+                              _isInside ? Colors.greenAccent : Colors.redAccent,
+                          fontSize: 16),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -118,9 +247,22 @@ class _CameraScreenState extends State<CameraScreen> {
               padding: const EdgeInsets.only(bottom: 20.0),
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Icon(
-                  Icons.arrow_right,
-                  size: 100,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.arrow_right,
+                      size: 100,
+                      color: _isInside ? Colors.greenAccent : Colors.redAccent,
+                    ),
+                    Text(
+                      rightArrowDistance + " mts",
+                      style: TextStyle(
+                          color:
+                              _isInside ? Colors.greenAccent : Colors.redAccent,
+                          fontSize: 16),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -128,26 +270,6 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       ),
     );
-  }
-
-  getCameraLensIcons(lensDirection) {
-    switch (lensDirection) {
-      case CameraLensDirection.back:
-        return CupertinoIcons.switch_camera;
-      case CameraLensDirection.front:
-        return CupertinoIcons.switch_camera_solid;
-      case CameraLensDirection.external:
-        return CupertinoIcons.photo_camera;
-      default:
-        return Icons.device_unknown;
-    }
-  }
-
-  onSwitchCamera() {
-    selectedCameraIndex =
-        selectedCameraIndex < cameras.length - 1 ? selectedCameraIndex + 1 : 0;
-    CameraDescription selectedCamera = cameras[selectedCameraIndex];
-    initCamera(selectedCamera);
   }
 
   showCameraException(e) {

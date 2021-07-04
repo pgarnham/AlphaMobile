@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:alpha_mobile/messages.dart';
 import 'package:alpha_mobile/screens/camera.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -207,6 +208,16 @@ class PropertiesDetail extends StatefulWidget {
 class _PropertiesDetailState extends State<PropertiesDetail> {
   String _message;
 
+  Future<void> openMap(double latitude, double longitude) async {
+    String googleUrl =
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    if (await canLaunch(googleUrl)) {
+      await launch(googleUrl);
+    } else {
+      throw 'Could not open the map.';
+    }
+  }
+
   newMessage() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String userApiKey = sharedPreferences.getString("apiKey");
@@ -398,25 +409,40 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
               ),
             ),
             SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CameraScreen()),
-                );
-              },
-              icon: Icon(Icons.explore),
-              label: Text("Como Llegar"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CameraScreen()),
+                    );
+                  },
+                  icon: Icon(Icons.explore),
+                  label: Text("Explorar"),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    openMap(-3.823216, -38.481700);
+                  },
+                  icon: Icon(Icons.location_on),
+                  label: Text("Ver en Mapa"),
+                ),
+              ],
             ),
             SizedBox(height: 30),
-            TextField(
-              decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Preguntale algo al vendedor'),
-              controller: myController,
-              keyboardType: TextInputType.multiline,
-              minLines: 1, //Normal textInputField will be displayed
-              maxLines: 5, // when user presses enter it will adapt to it
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TextField(
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Preguntale algo al vendedor'),
+                controller: myController,
+                keyboardType: TextInputType.multiline,
+                minLines: 1, //Normal textInputField will be displayed
+                maxLines: 5, // when user presses enter it will adapt to it
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -427,7 +453,8 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 myController.clear();
               },
               child: const Text('Enviar'),
-            )
+            ),
+            SizedBox(height: 50)
           ],
         ),
       ),
