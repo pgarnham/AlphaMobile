@@ -7,6 +7,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:alpha_mobile/messages.dart';
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -226,9 +227,11 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
 
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MessagesPage()));
     } else {
       // If that call was not successful, throw an error.
-      throw Exception('Failed to load Chats');
+      throw Exception('Failed to send Message');
     }
   }
 
