@@ -5,9 +5,14 @@ import 'package:alpha_mobile/data.dart';
 import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:alpha_mobile/messages.dart';
+import 'package:alpha_mobile/screens/camera.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -21,9 +26,37 @@ class _PropertiesPageState extends State<PropertiesPage> {
   int _comunaId;
   bool _isLoading = false;
 
+  Location location = new Location();
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  void checkPermissions() async {
+    _serviceEnabled = await location.serviceEnabled();
+
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        SystemNavigator.pop();
+      }
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    checkPermissions();
+    apiProperties = getData();
   }
 
   Future<List> getData() async {
@@ -381,6 +414,16 @@ class PropertiesDetail extends StatefulWidget {
 class _PropertiesDetailState extends State<PropertiesDetail> {
   String _message;
 
+  Future<void> openMap(double latitude, double longitude) async {
+    String googleUrl =
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    if (await canLaunch(googleUrl)) {
+      await launch(googleUrl);
+    } else {
+      throw 'Could not open the map.';
+    }
+  }
+
   newMessage() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String userApiKey = sharedPreferences.getString("apiKey");
@@ -402,9 +445,11 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
 
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MessagesPage()));
     } else {
       // If that call was not successful, throw an error.
-      throw Exception('Failed to load Chats');
+      throw Exception('Failed to send Message');
     }
   }
 
@@ -569,15 +614,49 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 textAlign: TextAlign.justify,
               ),
             ),
-            SizedBox(height: 50),
-            TextField(
-              decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Preguntale algo al vendedor'),
-              controller: myController,
-              keyboardType: TextInputType.multiline,
-              minLines: 1, //Normal textInputField will be displayed
-              maxLines: 5, // when user presses enter it will adapt to it
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CameraScreen(
+                          widget.propertyInfo["coordinate1"],
+                          widget.propertyInfo["coordinate2"],
+                          widget.propertyInfo["coordinate3"],
+                          widget.propertyInfo["coordinate4"],
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.explore),
+                  label: Text("Explorar"),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    openMap(widget.propertyInfo["coordinate1"][0],
+                        widget.propertyInfo["coordinate1"][1]);
+                  },
+                  icon: Icon(Icons.location_on),
+                  label: Text("Ver en Mapa"),
+                ),
+              ],
+            ),
+            SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TextField(
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Preguntale algo al vendedor'),
+                controller: myController,
+                keyboardType: TextInputType.multiline,
+                minLines: 1, //Normal textInputField will be displayed
+                maxLines: 5, // when user presses enter it will adapt to it
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -588,7 +667,8 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 myController.clear();
               },
               child: const Text('Enviar'),
-            )
+            ),
+            SizedBox(height: 50)
           ],
         ),
       ),
