@@ -7,3 +7,5 @@ String sendMessage = "/api/communications/messages/create";
 String makeAppointmentPath = "/api/appointments/future/create";
 String getPropertiesPath = "/api/properties";
 String getUserAppointment = "/api/appointments/user/";
+String getComunes = "/api/locations";
+String getPropertiesComune = "/api/properties/commune/";
