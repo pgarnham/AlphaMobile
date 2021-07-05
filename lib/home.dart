@@ -4,7 +4,9 @@ import 'package:alpha_mobile/appointment.dart';
 import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:alpha_mobile/messages.dart';
@@ -19,9 +21,36 @@ class PropertiesPage extends StatefulWidget {
 class _PropertiesPageState extends State<PropertiesPage> {
   Future<List> apiProperties;
 
+  Location location = new Location();
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  void checkPermissions() async {
+    _serviceEnabled = await location.serviceEnabled();
+
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        SystemNavigator.pop();
+      }
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    checkPermissions();
     apiProperties = getData();
   }
 
@@ -416,7 +445,14 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => CameraScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => CameraScreen(
+                          widget.propertyInfo["coordinate1"],
+                          widget.propertyInfo["coordinate2"],
+                          widget.propertyInfo["coordinate3"],
+                          widget.propertyInfo["coordinate4"],
+                        ),
+                      ),
                     );
                   },
                   icon: Icon(Icons.explore),
@@ -424,7 +460,8 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    openMap(-3.823216, -38.481700);
+                    openMap(widget.propertyInfo["coordinate1"][0],
+                        widget.propertyInfo["coordinate1"][1]);
                   },
                   icon: Icon(Icons.location_on),
                   label: Text("Ver en Mapa"),

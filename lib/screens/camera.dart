@@ -5,6 +5,11 @@ import 'package:location/location.dart';
 import 'package:maps_toolkit/maps_toolkit.dart';
 
 class CameraScreen extends StatefulWidget {
+  final List coord1;
+  final List coord2;
+  final List coord3;
+  final List coord4;
+  CameraScreen(this.coord1, this.coord2, this.coord3, this.coord4);
   @override
   _CameraScreenState createState() => _CameraScreenState();
 }
@@ -24,31 +29,16 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Location location = new Location();
 
-  LatLng point01 = LatLng();
-  LatLng point02 = LatLng();
-  LatLng point03 = LatLng();
-  LatLng point04 = LatLng();
+  LatLng point01;
+  LatLng point02;
+  LatLng point03;
+  LatLng point04;
 
-  bool _serviceEnabled;
-  PermissionStatus _permissionGranted;
-
-  void checkPermissions() async {
-    _serviceEnabled = await location.serviceEnabled();
-
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return;
-      }
-    }
-
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
+  void setPoints() {
+    point01 = LatLng(widget.coord1[0], widget.coord1[1]);
+    point02 = LatLng(widget.coord2[0], widget.coord2[1]);
+    point03 = LatLng(widget.coord3[0], widget.coord3[1]);
+    point04 = LatLng(widget.coord4[0], widget.coord4[1]);
   }
 
   Future initCamera(CameraDescription cameraDescription) async {
@@ -83,9 +73,8 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget cameraPreview() {
     if (cameraController == null || !cameraController.value.isInitialized) {
       return Text(
-        'Loading',
-        style: TextStyle(
-            color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
+        'Abriendo camara',
+        style: TextStyle(color: Colors.white, fontSize: 20.0),
       );
     }
 
@@ -95,7 +84,7 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void initState() {
     super.initState();
-
+    setPoints();
     location.onLocationChanged.listen((LocationData currentLocation) {
       if (mounted) {
         setState(() {
@@ -123,7 +112,6 @@ class _CameraScreenState extends State<CameraScreen> {
                   point04,
                   point01)
               .toStringAsFixed(2);
-
           _isInside = PolygonUtil.containsLocation(
               LatLng(currentLocation.latitude, currentLocation.longitude),
               [
@@ -138,7 +126,6 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     });
 
-    checkPermissions();
     availableCameras().then((value) {
       cameras = value;
       if (cameras.length > 0) {
@@ -164,37 +151,73 @@ class _CameraScreenState extends State<CameraScreen> {
             cameraPreview(),
             Align(
               alignment: Alignment.center,
-              child: _isLoading
-                  ? Text("Determinando ubicación")
-                  : (_isInside
-                      ? Text(
-                          "Estas dentro del terreno",
-                          style: TextStyle(
-                              color: Colors.greenAccent, fontSize: 16),
-                        )
-                      : Text(
-                          "No estas dentro del terreno",
+              child: Container(
+                child: _isLoading
+                    ? Container(
+                        margin: const EdgeInsets.all(15.0),
+                        padding: const EdgeInsets.all(3.0),
+                        decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            border: Border.all(color: Colors.redAccent),
+                            borderRadius: BorderRadius.circular(5)),
+                        child: Text(
+                          "Determinando ubicación",
                           style:
                               TextStyle(color: Colors.redAccent, fontSize: 16),
-                        )),
+                        ),
+                      )
+                    : (_isInside
+                        ? Container(
+                            margin: const EdgeInsets.all(15.0),
+                            padding: const EdgeInsets.all(3.0),
+                            decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                border: Border.all(color: Colors.greenAccent),
+                                borderRadius: BorderRadius.circular(5)),
+                            child: Text(
+                              "Estás dentro del terreno",
+                              style: TextStyle(
+                                  color: Colors.greenAccent, fontSize: 16),
+                            ),
+                          )
+                        : Container(
+                            margin: const EdgeInsets.all(15.0),
+                            padding: const EdgeInsets.all(3.0),
+                            decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                border: Border.all(color: Colors.redAccent),
+                                borderRadius: BorderRadius.circular(5)),
+                            child: Text(
+                              "No estás dentro del terreno",
+                              style: TextStyle(
+                                  color: Colors.redAccent, fontSize: 16),
+                            ),
+                          )),
+              ),
             ),
             Align(
               alignment: Alignment.topCenter,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.arrow_drop_up,
-                    size: 100,
-                    color: _isInside ? Colors.greenAccent : Colors.redAccent,
+                  Container(
+                    padding: EdgeInsets.zero,
+                    child: Icon(
+                      Icons.arrow_drop_up,
+                      size: 100,
+                      color: _isInside ? Colors.greenAccent : Colors.redAccent,
+                    ),
                   ),
-                  Text(
-                    upArrowDistance + " mts",
-                    style: TextStyle(
-                        color:
-                            _isInside ? Colors.greenAccent : Colors.redAccent,
-                        fontSize: 16),
-                  ),
+                  _isInside
+                      ? Text(
+                          upArrowDistance + " mts",
+                          style: TextStyle(
+                              color: _isInside
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                              fontSize: 20),
+                        )
+                      : SizedBox.shrink(),
                 ],
               ),
             ),
@@ -205,12 +228,14 @@ class _CameraScreenState extends State<CameraScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(downArrowDistance + " mts",
-                        style: TextStyle(
-                            color: _isInside
-                                ? Colors.greenAccent
-                                : Colors.redAccent,
-                            fontSize: 16)),
+                    _isInside
+                        ? Text(downArrowDistance + " mts",
+                            style: TextStyle(
+                                color: _isInside
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                                fontSize: 20))
+                        : SizedBox.shrink(),
                     Icon(
                       Icons.arrow_drop_down,
                       size: 100,
@@ -220,50 +245,62 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 25.0),
+                    child: Icon(
                       Icons.arrow_left,
                       size: 100,
                       color: _isInside ? Colors.greenAccent : Colors.redAccent,
                     ),
-                    Text(
-                      leftArrowDistance + " mts",
-                      style: TextStyle(
-                          color:
-                              _isInside ? Colors.greenAccent : Colors.redAccent,
-                          fontSize: 16),
-                    ),
-                  ],
-                ),
+                  ),
+                  _isInside
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(
+                            leftArrowDistance + " mts",
+                            style: TextStyle(
+                                color: _isInside
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                                fontSize: 20),
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
+            Align(
+              alignment: Alignment.centerRight,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 25.0),
+                    child: Icon(
                       Icons.arrow_right,
                       size: 100,
                       color: _isInside ? Colors.greenAccent : Colors.redAccent,
                     ),
-                    Text(
-                      rightArrowDistance + " mts",
-                      style: TextStyle(
-                          color:
-                              _isInside ? Colors.greenAccent : Colors.redAccent,
-                          fontSize: 16),
-                    ),
-                  ],
-                ),
+                  ),
+                  _isInside
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(
+                            rightArrowDistance + " mts",
+                            style: TextStyle(
+                                color: _isInside
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                                fontSize: 20),
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                ],
               ),
             ),
           ],
