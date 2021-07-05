@@ -56,7 +56,6 @@ class _PropertiesPageState extends State<PropertiesPage> {
   void initState() {
     super.initState();
     checkPermissions();
-    apiProperties = getData();
   }
 
   Future<List> getData() async {
