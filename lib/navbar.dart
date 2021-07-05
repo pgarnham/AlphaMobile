@@ -20,12 +20,10 @@ class _NavBarState extends State<NavBar> {
   final GlobalKey<NavigatorState> secondKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> thirdKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> fourthKey = GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> fifthKey = GlobalKey<NavigatorState>();
 
   final tabs = [
     PropertiesPage(),
     MessagesPage(),
-    NotificationsPage(),
     CalendarPage(),
     AccountPage()
   ];
@@ -38,7 +36,7 @@ class _NavBarState extends State<NavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final tabKeys = [firstKey, secondKey, thirdKey, fourthKey, fifthKey];
+    final tabKeys = [firstKey, secondKey, thirdKey, fourthKey];
     return WillPopScope(
       onWillPop: () async {
         return !await tabKeys[_currIndex].currentState.maybePop();
@@ -62,11 +60,6 @@ class _NavBarState extends State<NavBar> {
               icon: Icon(Icons.email_outlined, size: 25),
               activeIcon: Icon(Icons.email, size: 28),
               label: 'Mensajes',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.notifications_outlined, size: 25),
-              activeIcon: Icon(Icons.notifications, size: 28),
-              label: 'Notificaciones',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today_outlined, size: 25),

@@ -49,10 +49,13 @@ class _MessagesPageState extends State<MessagesPage> {
       appBar: AppBar(title: Text('Mensajes'), actions: [
         GestureDetector(
           onTap: reloadChats,
-          child: Icon(
-            Icons.refresh,
-            size: 30.0,
-            color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Icon(
+              Icons.refresh,
+              size: 30.0,
+              color: Colors.white,
+            ),
           ),
         )
       ]),
@@ -61,52 +64,11 @@ class _MessagesPageState extends State<MessagesPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(left: 16, right: 16, top: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(
-                      "Mensajes",
-                      style:
-                          TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
-                    Container(
-                      padding:
-                          EdgeInsets.only(left: 8, right: 8, top: 2, bottom: 2),
-                      height: 30,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color: Colors.pink[50],
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.add,
-                            color: Colors.pink,
-                            size: 20,
-                          ),
-                          SizedBox(
-                            width: 2,
-                          ),
-                          Text(
-                            "Add New",
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
             Padding(
-              padding: EdgeInsets.only(top: 1, left: 16, right: 16),
+              padding: EdgeInsets.only(top: 10, left: 16, right: 16),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: "Search...",
+                  hintText: "Buscar...",
                   hintStyle: TextStyle(color: Colors.grey.shade600),
                   prefixIcon: Icon(
                     Icons.search,
