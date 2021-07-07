@@ -68,8 +68,11 @@ class _SignupPageState extends State<SignupPage> {
                       _inputMail = value;
                     },
                     validator: (value) {
-                      if (value.isEmpty || value == null) {
-                        return "Email requerido";
+                      if (value.isEmpty ||
+                          value == null ||
+                          !RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                              .hasMatch(value)) {
+                        return "Email válido requerido";
                       } else {
                         return null;
                       }

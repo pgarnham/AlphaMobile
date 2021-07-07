@@ -1,12 +1,18 @@
 import 'dart:convert';
 
 import 'package:alpha_mobile/appointment.dart';
+import 'package:alpha_mobile/data.dart';
 import 'package:alpha_mobile/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:alpha_mobile/messages.dart';
+import 'package:alpha_mobile/screens/camera.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PropertiesPage extends StatefulWidget {
   @override
@@ -15,44 +21,113 @@ class PropertiesPage extends StatefulWidget {
 
 class _PropertiesPageState extends State<PropertiesPage> {
   Future<List> apiProperties;
+  String _region;
+  String _comuna;
+  int _comunaId;
+  bool _isLoading = false;
+
+  Location location = new Location();
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  void checkPermissions() async {
+    _serviceEnabled = await location.serviceEnabled();
+
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        SystemNavigator.pop();
+      }
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    apiProperties = getData();
+    checkPermissions();
   }
 
   Future<List> getData() async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
       SharedPreferences sharedPreferences =
           await SharedPreferences.getInstance();
 
       var userApiKey = sharedPreferences.getString("apiKey");
 
-      final response = await http.get(
-        Uri.parse(apiUrl + getPropertiesPath),
+      final comunesResponse = await http.get(
+        Uri.parse(apiUrl + getComunes),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer " + userApiKey
         },
       );
 
-      //print(response.statusCode);
-      //print(jsonDecode(response.body));
+      await Future.forEach(jsonDecode(comunesResponse.body),
+          (responseComuna) async {
+        if (responseComuna["name"] == _comuna) {
+          setState(() {
+            _comunaId = responseComuna["id"];
+          });
+        }
+      });
+
+      if (_comunaId == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return [];
+      }
+
+      final response = await http.get(
+        Uri.parse(apiUrl + getPropertiesComune + _comunaId.toString()),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + userApiKey
+        },
+      );
+      setState(() {
+        _isLoading = false;
+      });
       return jsonDecode(response.body);
     } catch (e) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Intenta nuevamente')));
+      setState(() {
+        _isLoading = false;
+      });
       print(e);
     }
+    setState(() {
+      _isLoading = false;
+    });
     return [];
   }
 
-  Future<void> reloadData() async {
+  void searchProperties() {
     setState(() {
       apiProperties = getData();
     });
+  }
+
+  Future<void> reloadData() async {
+    if (_comuna != null && _region != null) {
+      setState(() {
+        apiProperties = getData();
+      });
+    }
   }
 
   @override
@@ -63,132 +138,265 @@ class _PropertiesPageState extends State<PropertiesPage> {
         ),
         body: RefreshIndicator(
           onRefresh: reloadData,
-          child: FutureBuilder<List>(
-            future: apiProperties,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (BuildContext ctx, int index) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PropertiesDetail(
-                                    snapshot.data[index]["id"],
-                                    snapshot.data[index])),
-                          );
-                        },
-                        child: Container(
-                          height: 480,
-                          child: Card(
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8),
-                                  child: Container(
-                                    height: 300,
-                                    width: MediaQuery.of(context).size.width,
-                                    child: Image.network(
-                                      'https://www.costacuraco.cl/wp-content/uploads/2020/06/costa-curaco-ventas-de-terrenos-en-chiloe-home-background-instagram-feed.jpg',
-                                      fit: BoxFit.cover,
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                Container(
+                  height: 195,
+                  child: Column(
+                    children: [
+                      SizedBox(height: 5),
+                      Text("Región",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 2),
+                      Container(
+                        width: MediaQuery.of(context).size.width - 5,
+                        padding: EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent),
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        ),
+                        child: DropdownButton<String>(
+                          value: _region,
+                          style: TextStyle(color: Colors.blue),
+                          iconEnabledColor: Colors.black,
+                          isExpanded: true,
+                          items: regiones
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            );
+                          }).toList(),
+                          hint: Text(
+                            "Seleccione una Región",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          onChanged: (String value) {
+                            setState(() {
+                              _region = value;
+                              _comuna = null;
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text("Comuna",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 2),
+                      Container(
+                        width: MediaQuery.of(context).size.width - 5,
+                        padding: EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent),
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        ),
+                        child: DropdownButton<String>(
+                          focusColor: Colors.white,
+                          value: _comuna,
+                          style: TextStyle(color: Colors.white),
+                          iconEnabledColor: Colors.black,
+                          isExpanded: true,
+                          items: _region != null
+                              ? comunas[_region].map<DropdownMenuItem<String>>(
+                                  (String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: TextStyle(color: Colors.black),
                                     ),
-                                  ),
-                                ),
-                                Text(
-                                  snapshot.data[index]["title"],
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20),
-                                ),
-                                Text(
-                                  snapshot.data[index]["address"],
-                                  style: TextStyle(fontSize: 17),
-                                ),
-                                SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    snapshot.data[index]["water"]
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8.0),
-                                            child: FaIcon(
-                                                FontAwesomeIcons.faucet,
-                                                color: Colors.black45),
-                                          )
-                                        : SizedBox.shrink(),
-                                    snapshot.data[index]["electricity"]
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8.0),
-                                            child: FaIcon(FontAwesomeIcons.bolt,
-                                                color: Colors.black45),
-                                          )
-                                        : SizedBox.shrink(),
-                                    snapshot.data[index]["sewer"]
-                                        ? Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8.0),
-                                            child: FaIcon(
-                                                FontAwesomeIcons.toilet,
-                                                color: Colors.black45),
-                                          )
-                                        : SizedBox.shrink(),
-                                  ],
-                                ),
-                                SizedBox(height: 10),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Row(
+                                  );
+                                }).toList()
+                              : [],
+                          hint: Text(
+                            "Seleccione una Comuna",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          onChanged: (String value) {
+                            setState(() {
+                              _comuna = value;
+                            });
+                          },
+                        ),
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            if (_isLoading == false) {
+                              if (_region != null && _comuna != null) {
+                                searchProperties();
+                              }
+                            }
+                          },
+                          child:
+                              _isLoading ? Text("Buscando...") : Text("Buscar"))
+                    ],
+                  ),
+                ),
+                Divider(
+                  color: Colors.blueAccent,
+                ),
+                FutureBuilder<List>(
+                  future: apiProperties,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      print(snapshot.data);
+                      if (snapshot.data.isNotEmpty) {
+                        return ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (BuildContext ctx, int index) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => PropertiesDetail(
+                                          snapshot.data[index]["id"],
+                                          snapshot.data[index])),
+                                );
+                              },
+                              child: Container(
+                                height: 480,
+                                child: Card(
+                                  child: Column(
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                      Padding(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 8),
+                                        child: Container(
+                                          height: 300,
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          child: Image.network(
+                                            'https://www.costacuraco.cl/wp-content/uploads/2020/06/costa-curaco-ventas-de-terrenos-en-chiloe-home-background-instagram-feed.jpg',
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        snapshot.data[index]["title"],
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20),
+                                      ),
+                                      Text(
+                                        snapshot.data[index]["address"],
+                                        style: TextStyle(fontSize: 17),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
-                                          Text(
-                                            "Precio: " +
-                                                snapshot.data[index]["price"]
-                                                    .toString() +
-                                                " UF",
-                                            style: TextStyle(fontSize: 17),
-                                          ),
-                                          Text(
-                                            "Superficie: " +
-                                                snapshot.data[index]["area"]
-                                                    .toString() +
-                                                " m2",
-                                            style: TextStyle(fontSize: 17),
-                                          ),
-                                          Text(
-                                            "Contacto: " +
-                                                snapshot.data[index]["contact"],
-                                            style: TextStyle(fontSize: 17),
-                                          )
+                                          snapshot.data[index]["water"]
+                                              ? Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 8.0),
+                                                  child: FaIcon(
+                                                      FontAwesomeIcons.faucet,
+                                                      color: Colors.black45),
+                                                )
+                                              : SizedBox.shrink(),
+                                          snapshot.data[index]["electricity"]
+                                              ? Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 8.0),
+                                                  child: FaIcon(
+                                                      FontAwesomeIcons.bolt,
+                                                      color: Colors.black45),
+                                                )
+                                              : SizedBox.shrink(),
+                                          snapshot.data[index]["sewer"]
+                                              ? Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 8.0),
+                                                  child: FaIcon(
+                                                      FontAwesomeIcons.toilet,
+                                                      color: Colors.black45),
+                                                )
+                                              : SizedBox.shrink(),
                                         ],
                                       ),
+                                      SizedBox(height: 10),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8.0),
+                                        child: Row(
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Precio: " +
+                                                      snapshot.data[index]
+                                                              ["price"]
+                                                          .toString() +
+                                                      " UF",
+                                                  style:
+                                                      TextStyle(fontSize: 17),
+                                                ),
+                                                Text(
+                                                  "Superficie: " +
+                                                      snapshot.data[index]
+                                                              ["area"]
+                                                          .toString() +
+                                                      " m2",
+                                                  style:
+                                                      TextStyle(fontSize: 17),
+                                                ),
+                                                Text(
+                                                  "Contacto: " +
+                                                      snapshot.data[index]
+                                                          ["contact"],
+                                                  style:
+                                                      TextStyle(fontSize: 17),
+                                                )
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      )
                                     ],
                                   ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      } else if (snapshot.data.isEmpty) {
+                        return Center(
+                            child: Text("No hay propiedades en esa comuna"));
+                      } else {
+                        return Container();
+                      }
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(),
                       );
-                    },
-                  );
-                } else {
-                  return Center(child: Text("No hay propiedades"));
-                }
-              } else {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-            },
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.none) {
+                      return Center(child: Text("Seleccione Región y Comuna"));
+                    } else {
+                      return Container();
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ));
   }
@@ -204,6 +412,16 @@ class PropertiesDetail extends StatefulWidget {
 
 class _PropertiesDetailState extends State<PropertiesDetail> {
   String _message;
+
+  Future<void> openMap(double latitude, double longitude) async {
+    String googleUrl =
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    if (await canLaunch(googleUrl)) {
+      await launch(googleUrl);
+    } else {
+      throw 'Could not open the map.';
+    }
+  }
 
   newMessage() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -226,9 +444,11 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
 
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MessagesPage()));
     } else {
       // If that call was not successful, throw an error.
-      throw Exception('Failed to load Chats');
+      throw Exception('Failed to send Message');
     }
   }
 
@@ -393,15 +613,49 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 textAlign: TextAlign.justify,
               ),
             ),
-            SizedBox(height: 50),
-            TextField(
-              decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Preguntale algo al vendedor'),
-              controller: myController,
-              keyboardType: TextInputType.multiline,
-              minLines: 1, //Normal textInputField will be displayed
-              maxLines: 5, // when user presses enter it will adapt to it
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CameraScreen(
+                          widget.propertyInfo["coordinate1"],
+                          widget.propertyInfo["coordinate2"],
+                          widget.propertyInfo["coordinate3"],
+                          widget.propertyInfo["coordinate4"],
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.explore),
+                  label: Text("Explorar"),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    openMap(widget.propertyInfo["coordinate1"][0],
+                        widget.propertyInfo["coordinate1"][1]);
+                  },
+                  icon: Icon(Icons.location_on),
+                  label: Text("Ver en Mapa"),
+                ),
+              ],
+            ),
+            SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: TextField(
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Preguntale algo al vendedor'),
+                controller: myController,
+                keyboardType: TextInputType.multiline,
+                minLines: 1, //Normal textInputField will be displayed
+                maxLines: 5, // when user presses enter it will adapt to it
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -412,7 +666,8 @@ class _PropertiesDetailState extends State<PropertiesDetail> {
                 myController.clear();
               },
               child: const Text('Enviar'),
-            )
+            ),
+            SizedBox(height: 50)
           ],
         ),
       ),
